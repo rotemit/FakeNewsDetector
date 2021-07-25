@@ -170,12 +170,48 @@ def extract_root_age(driver):
     redirect(driver, 'Activity log', False)
     filter_button = redirect_by_xpath(driver, "//span[text()='Filter']")
     filter_button[0].click()
-    # filters = redirect_by_xpath(driver,
-    #                             "//div[@class='emxnvquj ni8dbmo4 tr9rh885 ciko2aqh']/div/div/div/div/div/div/div/div")
-    year_button = redirect_by_xpath(driver, "//div[@class='tojvnm2t a6sixzi8 k5wvi7nf q3lfd5jv pk4s997a bipmatt0 cebpdrjk qowsmv63 owwhemhu dp1hu0rb dhp61c6y l9j0dhe7 iyyx5f41 a8s20v7p']")
+    year_button = redirect_by_xpath(driver, "//div[@class='n1l5q3vz nmyp5q72']")
     year_button[0].click()
-    year = scroll_to_bottom(driver, "//div[@class=' hu5pjgll lzf7d6o1']")
-    print(year)
+
+    years = redirect_by_xpath(driver, "//div[@class='oajrlxb2 bp9cbjyn tdjehn4e mtkw9kbi tlpljxtp qensuy8j ppp5ayq2 goun2846 ccm00jje s44p3ltw mk2mc5f4 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv nhd2j8a9 j83agx80 mg4g778l btwxx1t3 pfnyh3mw p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x tgvbjcpo hpfvmrgz jktsbyx5 d1544ag0 osnr6wyh tw6a2znq l9j0dhe7 hzawbc8m esuyzwwr f1sip0of du4w35lb lzcic4wl abiwlrkh p8dawk7l dwo3fsh8 ow4ym5g4 auili1gw beltcj47 p86d2i9g aot14ch1 kzx2olss i1fnvgqd']")
+    years_text = "//div[@class='oajrlxb2 bp9cbjyn tdjehn4e mtkw9kbi tlpljxtp qensuy8j ppp5ayq2 goun2846 ccm00jje s44p3ltw mk2mc5f4 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv nhd2j8a9 j83agx80 mg4g778l btwxx1t3 pfnyh3mw p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x tgvbjcpo hpfvmrgz jktsbyx5 d1544ag0 osnr6wyh tw6a2znq l9j0dhe7 hzawbc8m esuyzwwr f1sip0of du4w35lb lzcic4wl abiwlrkh p8dawk7l dwo3fsh8 ow4ym5g4 auili1gw beltcj47 p86d2i9g aot14ch1 kzx2olss i1fnvgqd']"
+
+    # years = redirect_by_xpath(driver, "//div[@class=tojvnm2t a6sixzi8 k5wvi7nf q3lfd5jv pk4s997a bipmatt0 cebpdrjk qowsmv63 owwhemhu dp1hu0rb dhp61c6y l9j0dhe7 iyyx5f41 a8s20v7p']")
+    year_arr = scroll_to_bottom(driver, years_text)
+    # year_arr = year_arr.split('\n')
+    print(year_arr)
+    # years.find_element_by_xpath("//select[@name='"+year_arr[len(year_arr)-1]+"']")[0].click()
+
+    '''
+    like scrolling but clicking at the end!
+    '''
+    # actions = ActionChains(driver)
+    # elements = driver.find_elements_by_xpath(years)
+    # print("here")
+    # old_elements_amount = len(elements)
+    # print(f"{elements}")
+    # while True:
+    #     time.sleep(2)
+    #     actions.send_keys(Keys.END)
+    #     actions.perform()
+    #     elements = driver.find_elements_by_xpath(years)
+    #     if len(elements) == old_elements_amount:
+    #         break
+    #     old_elements_amount = len(elements)
+    # print(f"{elements}")
+    # print(f"{year}")
+    # years = redirect_by_xpath(driver, "//span[text()='Year']")
+    # year_arr = years.split('\n')
+    # str_year = "span[text() = '" + year_arr[len(year_arr)-1] + "']"
+    # redirect_by_xpath(driver, str_year).click()
+    # year = years.selectByValue(year_arr[len(year_arr)-1])
+    # print(f"{year}")
+    # print(year_arr[len(year_arr)-1])
+    # print(f"{len(year)}")
+    # year[len(year)-1].click()
+    # redirect_by_xpath(driver, year).click()
+    # print(len(year))
+    # year.click()
     # profile_filter = find_profile_filter(driver, filters)
     # profile_filter.click()
     # save_changes_button = redirect_by_xpath(driver, "//div[@class='n1l5q3vz n851cfcs f4c7eilb']/div")
