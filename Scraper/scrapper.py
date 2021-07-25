@@ -167,8 +167,8 @@ def extract_root_age(driver):
     click the 3 dots icon
     '''
     upper_navigation_bar[len(upper_navigation_bar) - 1].click()
-    redirect(driver, 'Activity log', False)
-    filter_button = redirect_by_xpath(driver, "//span[text()='Filter']")
+    redirect(driver, 'Activity Log', False)
+    filter_button = redirect_by_xpath(driver, "//span[text()='Date']")
     filter_button[0].click()
     year_button = redirect_by_xpath(driver, "//div[@class='n1l5q3vz nmyp5q72']")
     year_button[0].click()
