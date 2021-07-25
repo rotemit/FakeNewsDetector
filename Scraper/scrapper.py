@@ -16,7 +16,7 @@ import json
 
 year_not_registered = "//*[contains(text(),'Born on ') or contains(text(),'No posts available')]"
 
-root_user = "Niv Cohen"
+root_user = "Ofri Shani"
 
 friends_user_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql rrkovp55 a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb mdeji52x a5q79mjw g1cxx5fr lrazzd5p oo9gr5id']"
 
@@ -32,7 +32,7 @@ def scrap(name, email, password):
     # login(driver, email, password)
     login(driver, email, password)
     time.sleep(5)
-    redirect(driver, "Niv Cohen")
+    redirect(driver, "Ofri Shani")
     user = extract_user(driver, 0)
     with open('BasicGraph.json', 'w') as outfile:
         json.dump(user, outfile, indent = 4,cls = account_encoder)
@@ -170,12 +170,16 @@ def extract_root_age(driver):
     redirect(driver, 'Activity log', False)
     filter_button = redirect_by_xpath(driver, "//span[text()='Filter']")
     filter_button[0].click()
-    filters = redirect_by_xpath(driver,
-                                "//div[@class='emxnvquj ni8dbmo4 tr9rh885 ciko2aqh']/div/div/div/div/div/div/div/div")
-    profile_filter = find_profile_filter(driver, filters)
-    profile_filter.click()
-    save_changes_button = redirect_by_xpath(driver, "//div[@class='n1l5q3vz n851cfcs f4c7eilb']/div")
-    save_changes_button[0].click()
+    # filters = redirect_by_xpath(driver,
+    #                             "//div[@class='emxnvquj ni8dbmo4 tr9rh885 ciko2aqh']/div/div/div/div/div/div/div/div")
+    year_button = redirect_by_xpath(driver, "//div[@class='tojvnm2t a6sixzi8 k5wvi7nf q3lfd5jv pk4s997a bipmatt0 cebpdrjk qowsmv63 owwhemhu dp1hu0rb dhp61c6y l9j0dhe7 iyyx5f41 a8s20v7p']")
+    year_button[0].click()
+    year = scroll_to_bottom(driver, "//div[@class=' hu5pjgll lzf7d6o1']")
+    print(year)
+    # profile_filter = find_profile_filter(driver, filters)
+    # profile_filter.click()
+    # save_changes_button = redirect_by_xpath(driver, "//div[@class='n1l5q3vz n851cfcs f4c7eilb']/div")
+    # save_changes_button[0].click()
 
     redirect_by_xpath(driver, "//span[text()='Profile']")[0].click()
     date_enrolled = scroll_to_bottom(driver,
@@ -351,4 +355,4 @@ def extract_field_members(driver, connection_degree, field):
 
 
 if __name__ == '__main__':
-    scrap("Niv Cohen", "niv1018@gmail.com", "Nfn151294Nfn")
+    scrap("Ofri Shani", "ofrishani10@walla.com", "Is5035")
