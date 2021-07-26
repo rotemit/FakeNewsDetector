@@ -8,7 +8,6 @@ from modules.Connection import Connection
 from modules.Account import account_encoder
 from modules.User import User
 
-
 import time
 from datetime import date
 from modules.Account import Account
@@ -35,8 +34,8 @@ def scrap(name, email, password):
     redirect(driver, "Ofri Shani")
     user = extract_user(driver, 0)
     with open('BasicGraph.json', 'w') as outfile:
-        json.dump(user, outfile, indent = 4,cls = account_encoder)
-    return json.dumps(user, indent=4, cls = account_encoder)
+        json.dump(user, outfile, indent=4, cls=account_encoder)
+    return json.dumps(user, indent=4, cls=account_encoder)
 
 
 def init_sel():
@@ -55,8 +54,9 @@ def login(driver, email, password):
     time.sleep(3)
     search_pass.send_keys(password)
     time.sleep(4)
-    search_button = redirect_by_xpath(driver,"//div[@class='_6ltg']")
+    search_button = redirect_by_xpath(driver, "//div[@class='_6ltg']")
     search_button[0].click()
+
 
 def background_click(driver):
     time.sleep(0.5)
@@ -65,8 +65,9 @@ def background_click(driver):
     actions.perform()
     time.sleep(0.5)
 
-def redirect(driver, next_page, inital_click = True):
-    if inital_click:
+
+def redirect(driver, next_page, initial_click=True):
+    if initial_click:
         background_click(driver)
 
     try:
@@ -117,7 +118,7 @@ def extract_profile_summary(driver, connection_degree):
     total_friends = extract_total_friends(driver)
     age_of_account = extract_age_of_account(driver, connection_degree)
     print(summary)
-    print("Age: "+str(age_of_account))
+    print("Age: " + str(age_of_account))
     return summary, total_friends, age_of_account
 
 
@@ -162,65 +163,11 @@ def scroll_to_bottom(driver, elements_xpath):
 
 
 def extract_root_age(driver):
-    upper_navigation_bar = redirect_by_xpath(driver, "//div[@class='ku2zlfd4 q3mryazl']/div/div")
-    '''
-    click the 3 dots icon
-    '''
-    upper_navigation_bar[len(upper_navigation_bar) - 1].click()
-    redirect(driver, 'Activity Log', False)
-    filter_button = redirect_by_xpath(driver, "//span[text()='Date']")
-    filter_button[0].click()
-    year_button = redirect_by_xpath(driver, "//div[@class='n1l5q3vz nmyp5q72']")
-    year_button[0].click()
-
-    years = redirect_by_xpath(driver, "//div[@class='oajrlxb2 bp9cbjyn tdjehn4e mtkw9kbi tlpljxtp qensuy8j ppp5ayq2 goun2846 ccm00jje s44p3ltw mk2mc5f4 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv nhd2j8a9 j83agx80 mg4g778l btwxx1t3 pfnyh3mw p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x tgvbjcpo hpfvmrgz jktsbyx5 d1544ag0 osnr6wyh tw6a2znq l9j0dhe7 hzawbc8m esuyzwwr f1sip0of du4w35lb lzcic4wl abiwlrkh p8dawk7l dwo3fsh8 ow4ym5g4 auili1gw beltcj47 p86d2i9g aot14ch1 kzx2olss i1fnvgqd']")
-    years_text = "//div[@class='oajrlxb2 bp9cbjyn tdjehn4e mtkw9kbi tlpljxtp qensuy8j ppp5ayq2 goun2846 ccm00jje s44p3ltw mk2mc5f4 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv nhd2j8a9 j83agx80 mg4g778l btwxx1t3 pfnyh3mw p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x tgvbjcpo hpfvmrgz jktsbyx5 d1544ag0 osnr6wyh tw6a2znq l9j0dhe7 hzawbc8m esuyzwwr f1sip0of du4w35lb lzcic4wl abiwlrkh p8dawk7l dwo3fsh8 ow4ym5g4 auili1gw beltcj47 p86d2i9g aot14ch1 kzx2olss i1fnvgqd']"
-
-    # years = redirect_by_xpath(driver, "//div[@class=tojvnm2t a6sixzi8 k5wvi7nf q3lfd5jv pk4s997a bipmatt0 cebpdrjk qowsmv63 owwhemhu dp1hu0rb dhp61c6y l9j0dhe7 iyyx5f41 a8s20v7p']")
-    year_arr = scroll_to_bottom(driver, years_text)
-    # year_arr = year_arr.split('\n')
-    print(year_arr)
-    # years.find_element_by_xpath("//select[@name='"+year_arr[len(year_arr)-1]+"']")[0].click()
-
-    '''
-    like scrolling but clicking at the end!
-    '''
-    # actions = ActionChains(driver)
-    # elements = driver.find_elements_by_xpath(years)
-    # print("here")
-    # old_elements_amount = len(elements)
-    # print(f"{elements}")
-    # while True:
-    #     time.sleep(2)
-    #     actions.send_keys(Keys.END)
-    #     actions.perform()
-    #     elements = driver.find_elements_by_xpath(years)
-    #     if len(elements) == old_elements_amount:
-    #         break
-    #     old_elements_amount = len(elements)
-    # print(f"{elements}")
-    # print(f"{year}")
-    # years = redirect_by_xpath(driver, "//span[text()='Year']")
-    # year_arr = years.split('\n')
-    # str_year = "span[text() = '" + year_arr[len(year_arr)-1] + "']"
-    # redirect_by_xpath(driver, str_year).click()
-    # year = years.selectByValue(year_arr[len(year_arr)-1])
-    # print(f"{year}")
-    # print(year_arr[len(year_arr)-1])
-    # print(f"{len(year)}")
-    # year[len(year)-1].click()
-    # redirect_by_xpath(driver, year).click()
-    # print(len(year))
-    # year.click()
-    # profile_filter = find_profile_filter(driver, filters)
-    # profile_filter.click()
-    # save_changes_button = redirect_by_xpath(driver, "//div[@class='n1l5q3vz n851cfcs f4c7eilb']/div")
-    # save_changes_button[0].click()
-
-    redirect_by_xpath(driver, "//span[text()='Profile']")[0].click()
-    date_enrolled = scroll_to_bottom(driver,
-                                     "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 e5nlhep0 aodizinl']")
-    return calculate_age(date_enrolled)
+    driver.get("https://www.facebook.com/your_information")
+    personal_information_button = redirect_by_xpath(driver, "//span[text()='Personal Information']")
+    personal_information_button[0].click()
+    date_enrolled = redirect_by_xpath(driver,"//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d9wwppkn fe6kdd0r mau55g9w c8b282yb mdeji52x e9vueds3 j5wam9gi knj5qynh pipptul6 hzawbc8m']")
+    return calculate_account_age(date_enrolled[0].text)
 
 
 def extract_node_age(driver):
@@ -232,6 +179,13 @@ def extract_age_of_account(driver, connection_degree):
         return extract_root_age(driver)
     return extract_node_age(driver)
 
+def calculate_account_age(date_enrolled):
+    date_arr = date_enrolled.split(' ')
+    date_arr[1] = month_converter(date_arr[1], True)
+    date_joined = date(int(date_arr[2]), date_arr[1], int(date_arr[0]))
+    curr_date = date.today()
+    number_of_days = curr_date - date_joined
+    return number_of_days.days
 
 def calculate_age(date_joined):
     date_arr = date_joined.split(' ')
@@ -242,9 +196,12 @@ def calculate_age(date_joined):
     return number_of_days.days
 
 
-def month_converter(month):
+def month_converter(month, short=False):
     months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
               'August', 'September', 'October', 'November', 'December']
+    if short:
+        months = ['Jan,', 'Feb,', 'Mar,', 'Apr,', 'May,', 'Jun,', 'Jul,',
+                  'Aug,', 'Sep,', 'Oct,', 'Nov,', 'Dec,']
     return months.index(month) + 1
 
 
@@ -267,9 +224,9 @@ def get_age_of_account(driver):
             if mid is None:
                 redirect_by_xpath(driver, "//span[text()='Year']")[0].click()
             else:
-                redirect_by_xpath(driver, "//span[text()='"+str(mid)+"']")[0].click()
+                redirect_by_xpath(driver, "//span[text()='" + str(mid) + "']")[0].click()
             mid = left + (right - left) // 2
-            print('clicking on year - '+str(mid))
+            print('clicking on year - ' + str(mid))
             redirect_by_xpath(driver, "//span[text()='" + str(mid) + "']")[0].click()
             redirect_by_xpath(driver, "//span[text()='Done']")[0].click()
             time.sleep(1)
@@ -280,10 +237,10 @@ def get_age_of_account(driver):
                 right = mid
     except:
         return 0
-    return calculate_age("1 January "+str(left))
+    return calculate_age("1 January " + str(left))
 
 
-def extract_user(driver, connection_degree, user = None):
+def extract_user(driver, connection_degree, user=None):
     friendship_duration = 0
     user_name = user.text if user is not None else root_user
     all_users.add(user_name)
@@ -345,7 +302,7 @@ def extract_field_members(driver, connection_degree, field):
         redirect(driver, "Family and relationships", False)
     else:
         is_exist = redirect(driver, field)
-        if is_exist==False:
+        if is_exist == False:
             return []
 
     field_members = []
@@ -359,7 +316,7 @@ def extract_field_members(driver, connection_degree, field):
     if connection_degree == 1:
         insert_members(members)
 
-    while index < len(members) and counter <5:
+    while index < len(members) and counter < 5:
         members = redirect_by_xpath(driver, family_member_xpath if field == 'Family' else friends_user_xpath)
         time.sleep(1)
         if members[0].text == '':
@@ -377,7 +334,7 @@ def extract_field_members(driver, connection_degree, field):
                     member_mutual_friends = member_mutual_friends.replace(' mutual friends', '')
                     member_mutual_friends = member_mutual_friends.replace(' mutual friend', '')
                     member_mutual_friends = int(member_mutual_friends)
-                    print("mutual friends: "+str(member_mutual_friends))
+                    print("mutual friends: " + str(member_mutual_friends))
                     field_members[counter].set_mutual_friends(member_mutual_friends)
                 except:
                     background_click(driver)
