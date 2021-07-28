@@ -13,26 +13,29 @@ from datetime import date
 from modules.Account import Account
 import json
 
+"""
+some global needed variable, some might change in diffrent versions of Facebook
+"""
 year_not_registered = "//*[contains(text(),'Born on ') or contains(text(),'No posts available')]"
-
-root_user = "Ofri Shani"
-
-friends_user_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql rrkovp55 a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb mdeji52x a5q79mjw g1cxx5fr lrazzd5p oo9gr5id']"
-
-family_member_xpath = "//div[@class='nc684nl6']"
-
-friendship_duration_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql rrkovp55 a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh oo9gr5id hzawbc8m']"
-
+root_user = ""
+friends_user_xpath = "//a[@class='oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gmql0nx0 gpro0wi8']"
+family_member_xpath = "//span[@class='nc684nl6']"
+friendship_duration_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh oo9gr5id hzawbc8m']"
 all_users = set([])
 
-
+"""
+This method scrap the root user.
+First, it's login to the user, later go to the user profile
+then it's extract all the information about the user and his/her friends.
+At the end it writes all the data into a Json file.
+"""
 def scrap(name, email, password):
     driver = init_sel()
-    # login(driver, email, password)
     login(driver, email, password)
+    root_user = name
     time.sleep(5)
-    redirect(driver, "Ofri Shani")
-    user = extract_user(driver, 0)
+    redirect(driver, name)
+    user = extract_user(driver, 0, name, True)
     with open('BasicGraph.json', 'w') as outfile:
         json.dump(user, outfile, indent=4, cls=account_encoder)
     return json.dumps(user, indent=4, cls=account_encoder)
@@ -109,16 +112,22 @@ def extract_total_friends(driver):
 def extract_profile_summary(driver, connection_degree):
     summary = {}
     fields = ['work', 'education', 'current_town', 'homeTown', 'status']
-    elements = redirect_by_xpath(driver, "//div[@class='c9zspvje']")
-    time.sleep(2)
-    for i in range(len(elements)):
-        temp_data = elements[i].text.partition("\nShared")
-        if temp_data[0] != '' and not temp_data[0].startswith('Add ') and not temp_data[0].startswith('No '):
-            summary[fields[i]] = temp_data[0]
-    total_friends = extract_total_friends(driver)
+    try:
+        elements = redirect_by_xpath(driver, "//div[@class='c9zspvje']")
+        time.sleep(2)
+        for i in range(len(elements)):
+            temp_data = elements[i].text.partition("\nShared")
+            if temp_data[0] != '' and not temp_data[0].startswith('Add ') and not temp_data[0].startswith('No '):
+                summary[fields[i]] = temp_data[0]
+    except:
+        summary = None
+    try:
+        total_friends = extract_total_friends(driver)
+    except:
+        total_friends = None
     age_of_account = extract_age_of_account(driver, connection_degree)
     print(summary)
-    print("Age: " + str(age_of_account))
+    print("Age: " + str(age_of_account) + " days old")
     return summary, total_friends, age_of_account
 
 
@@ -132,7 +141,7 @@ def extract_friendship_duration(driver):
     upper_navigation_bar = redirect_by_xpath(driver, "//div[@class='ku2zlfd4 q3mryazl']/div/div")
     time.sleep(2)
     upper_navigation_bar[len(upper_navigation_bar) - 1].click()
-    redirect(driver, 'See friendship', False)
+    redirect(driver, 'See Friendship', False)
     all_common_fields = redirect_by_xpath(driver, friendship_duration_xpath)
     for field in all_common_fields:
         if field.text.startswith("Your friend since "):
@@ -212,7 +221,10 @@ def insert_members(members):
 
 
 def get_age_of_account(driver):
-    redirect(driver, "Posts")
+    try:
+        redirect(driver, "Posts")
+    except:
+        return 0
     mid = None
     left = 2008
     right = date.today().year
@@ -240,15 +252,11 @@ def get_age_of_account(driver):
     return calculate_age("1 January " + str(left))
 
 
-def extract_user(driver, connection_degree, user=None):
+def extract_user(driver, connection_degree, user, main_user = False):
     friendship_duration = 0
-    user_name = user.text if user is not None else root_user
+    user_name = user if main_user else user.text
     all_users.add(user_name)
-    if user:
-        redirect(driver, user_name)
-    if user_name == "Gal Rubin" or user_name == "Lior Duani":
-        print("stop")
-
+    redirect(driver, user_name)
     attributes, total_friends, age_of_account = scrap_about(driver, connection_degree)
     if connection_degree == 1:
         friendship_duration = int(extract_friendship_duration(driver))
@@ -262,8 +270,7 @@ def extract_user(driver, connection_degree, user=None):
         return Account(user_name, {},
                        Connection(attributes, friendship_duration),
                        User(total_friends, age_of_account))
-    if user_name == "Noa Kenner":
-        print("Stop to check ")
+
     network = scrap_network(driver, connection_degree + 1)
     if connection_degree == 2:
         driver.back()
@@ -286,21 +293,20 @@ def scrap_network(driver, connection_degree):
     friends['family'] = extract_field_members(driver, connection_degree, 'Family')
     time.sleep(1)
     redirect(driver, 'Friends')
-    friends['childhood_friends'] = extract_field_members(driver, connection_degree, 'Home Town')
+    friends['childhood_friends'] = extract_field_members(driver, connection_degree, 'Hometown')
     friends['childhood_friends'] += extract_field_members(driver, connection_degree, 'High School')
     friends['neighbors'] = extract_field_members(driver, connection_degree, 'Current City')
-    if connection_degree == 1:
-        print("stop")
     friends['colleague'] = extract_field_members(driver, connection_degree, 'Work')
-    friends['co_students'] = extract_field_members(driver, connection_degree, 'University')
+    friends['co_students'] = extract_field_members(driver, connection_degree, 'College')
 
     return friends
 
 
 def extract_field_members(driver, connection_degree, field):
     if field == 'Family':
-        redirect(driver, "Family and relationships", False)
+        redirect(driver, "Family and Relationships", False)
     else:
+        redirect(driver, 'Friends')
         is_exist = redirect(driver, field)
         if is_exist == False:
             return []
@@ -316,16 +322,24 @@ def extract_field_members(driver, connection_degree, field):
     if connection_degree == 1:
         insert_members(members)
 
-    while index < len(members) and counter < 5:
+    while index < len(members) and counter < 2:
+        print(f"{'index: ' + str(index)}")
+        print(f"{'counter: ' + str(counter)}")
+        print(f"{'members: ' + str(len(members))}")
+        print(f"{'connection degree: ' + str(connection_degree)}\n")
         members = redirect_by_xpath(driver, family_member_xpath if field == 'Family' else friends_user_xpath)
         time.sleep(1)
         if members[0].text == '':
             del members[0]
-        if connection_degree != 1 and members[index].text in all_users:
+        if  members[index].text == root_user:
+            index+=1
+            continue
+        elif connection_degree != 1 and members[index].text in all_users:
             index += 1
             continue
         else:
-            field_members.append(extract_user(driver, connection_degree, members[index]))
+            if index < len(members):
+                field_members.append(extract_user(driver, connection_degree, members[index]))
             time.sleep(2)
             if field != 'Family':
                 try:
@@ -341,11 +355,18 @@ def extract_field_members(driver, connection_degree, field):
                     driver.back()
             counter += 1
             index += 1
+            if field == 'Family':
+                redirect(driver, "Family and Relationships", False)
+            else:
+                redirect(driver, field)
+
     print(field_members)
     if field != 'Family':
         driver.back()
     return field_members
 
-
+'''
+Main function, we should enter the user name, email and password of the wanted root user
+'''
 if __name__ == '__main__':
     scrap("Ofri Shani", "ofrishani10@walla.com", "Is5035")
