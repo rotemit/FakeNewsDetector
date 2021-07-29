@@ -1,8 +1,8 @@
 import json
-from ..modules.Connection import Connection
-from ..modules.Account import Account
-from ..modules.User import User
-from ..Analyze.analyze import filter_network
+from modules.Connection import Connection
+from modules.Account import Account
+from modules.User import User
+from Analyze.analyze import filter_network
 
 
 def parse_rec(account):
@@ -30,7 +30,10 @@ def parse_user(json_user):
 
 if __name__ == '__main__':
     with open('BasicGraph.json') as json_file:
+
         json_user = json.load(json_file)
+        json_user = str(json_user).replace("\'", "\"")
+        print(json_user)
     account = parse_user(json_user)
     # print(account)
     filter_network("", account)

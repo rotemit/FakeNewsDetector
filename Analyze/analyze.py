@@ -5,13 +5,13 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from pyvis.network import Network
 
-from ..modules.Account import Account
-from ..modules.Ego.Colleague import Colleague
-from ..modules.Ego.CoStudent import CoStudent
-from ..modules.Ego.Neighbors import Neighbors
-from ..modules.Ego.ChildhoodFriend import ChildhoodFriend
-from ..modules.Ego.Family import Family
-from ..modules.Threshold import ConnectionThreshold, Threshold, UserThreshold
+from modules.Account import Account
+from modules.Ego.Colleague import Colleague
+from modules.Ego.CoStudent import CoStudent
+from modules.Ego.Neighbors import Neighbors
+from modules.Ego.ChildhoodFriend import ChildhoodFriend
+from modules.Ego.Family import Family
+from modules.Threshold import ConnectionThreshold, Threshold, UserThreshold
 
 module_map = {"family": Family(), "colleague": Colleague(), "co_students": CoStudent(),
               "neighbors": Neighbors(), "childhood_friends": ChildhoodFriend()}
