@@ -33,7 +33,7 @@ def scrap(name, email, password):
     driver = init_sel()
     login(driver, email, password)
     root_user = name
-    time.sleep(5)
+    time.sleep(3)
     redirect(driver, name)
     user = extract_user(driver, 0, name, True)
     with open('BasicGraph.json', 'w') as outfile:
@@ -165,6 +165,8 @@ def scroll_to_bottom(driver, elements_xpath):
         actions.send_keys(Keys.END)
         actions.perform()
         elements = driver.find_elements_by_xpath(elements_xpath)
+        for elem in elements:
+            print(elem.text)
         if len(elements) == old_elements_amount:
             break
         old_elements_amount = len(elements)
