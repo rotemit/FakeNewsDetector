@@ -6,6 +6,41 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 from googletrans import Translator
+import stop_words
+
+"""
+    Given a post, a _ , and a classifier,
+    return a grade between 0-5 indicating the level of fake
+"""
+def grade_post (post, machine, classifer):
+    tfidf_test = machine.transform([post])
+    y_pred = classifer.predict(tfidf_test)
+    return y_pred
+
+"""
+    Remove punctuation
+"""
+def clean_txt (txt):
+    # initializing punctuations string
+    punc = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+
+    # Removing punctuations in string
+    # Using loop + punctuation string
+    for ele in txt:
+        if ele in punc:
+            txt = txt.replace(ele, "")
+    return txt
+
+"""
+    Remove frequent and unimportant words
+"""
+def remove_stopwords(txt):
+    txt = clean_txt(txt)
+    stopwords = stop_words.stop_words
+    tokens = txt.split(" ")
+    resultwords = [word for word in tokens if word not in stopwords]
+    result = ' '.join(resultwords)
+    return result
 
 if __name__ == '__main__':
     # Read the data
@@ -20,10 +55,11 @@ if __name__ == '__main__':
     # x_train, x_test, y_train, y_test = train_test_split(df['text'], labels, test_size=0.2, random_state=7)
     # DataFlair - Initialize a TfidfVectorizer
     tfidf_vectorizer = TfidfVectorizer(max_df=0.7)
-
+    x_train = [remove_stopwords(sentence) for sentence in df["text"]]
+    y_train = labels
     # DataFlair - Fit and transform train set, transform test set
     tfidf_train = tfidf_vectorizer.fit_transform(x_train)
-    tfidf_test = tfidf_vectorizer.transform(x_test)
+    # tfidf_test = tfidf_vectorizer.transform(x_test)
     # DataFlair - Initialize a PassiveAggressiveClassifier
     pac = PassiveAggressiveClassifier(max_iter=50)
     pac.fit(tfidf_train, y_train)
