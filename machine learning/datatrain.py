@@ -9,7 +9,7 @@ from googletrans import Translator
 
 if __name__ == '__main__':
     # Read the data
-    df = pd.read_csv('file.csv')
+    df = pd.read_csv('mashrokit.csv')
 
     # Get shape and head
     df.shape
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     labels = df.label
     labels.head()
     # DataFlair - Split the dataset
-    x_train, x_test, y_train, y_test = train_test_split(df['post_text'], labels, test_size=0.4, random_state=7)
+    x_train, x_test, y_train, y_test = train_test_split(df['text'], labels, test_size=0.2, random_state=7)
     # DataFlair - Initialize a TfidfVectorizer
     tfidf_vectorizer = TfidfVectorizer(max_df=0.7)
 
@@ -34,4 +34,4 @@ if __name__ == '__main__':
     score = accuracy_score(y_test, y_pred)
     print(f'Accuracy: {round(score * 100, 2)}%')
     # DataFlair - Build confusion matrix
-    print(confusion_matrix(y_test, y_pred, labels=['FAKE', 'REAL']))
+    print(confusion_matrix(y_test, y_pred, labels=[0, 1, 2, 3, 4, 5]))
