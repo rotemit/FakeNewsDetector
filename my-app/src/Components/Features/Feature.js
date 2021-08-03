@@ -1,13 +1,17 @@
 import React from 'react';
 import './Feature.css';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from "react-router-dom";
 
 function Feature(porps) {
     const history = useHistory();
+
+  function handleClick() {
+    history.push('/EnterProfile')
+  }
     return (
       <div>
           <div className='actions'>
-            <button className='btn' onClick={() => history.push('../../Pages/HomePage.js')}>
+            <button className='btn' onClick={handleClick}>
                 {porps.text}
             </button>
         </div>
