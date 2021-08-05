@@ -4,9 +4,10 @@ from collections import namedtuple
 
 
 class Account:
-    def __init__(self, name, friends, connection: Connection, user: User):
+    def __init__(self, name, connection: Connection, user: User):
+    # def __init__(self, name, friends, connection: Connection, user: User):
         self.name = name
-        self.friends = friends
+        # self.friends = friends
         self.connection = connection
         self.user = user
 
@@ -14,12 +15,12 @@ class Account:
         return "Name: " + str(self.name) + "\n" \
                + str(self.connection) + "\n" + str(self.user) + "\nFriends: " + str(self.get_friends_str())
 
-    def get_friends_str(self):
-        for field in self.friends:
-            print(field)
-            for friend in self.friends[field]:
-                print(friend)
-                print()
+    # def get_friends_str(self):
+    #     for field in self.friends:
+    #         print(field)
+    #         for friend in self.friends[field]:
+    #             print(friend)
+    #             print()
 
     def set_mutual_friends(self, number_of_friends):
         self.connection.set_mutual_friends(number_of_friends)
@@ -61,12 +62,12 @@ class Account:
         connection_trust_value = (default_param_addition + friendship_duration_param) / 3 \
             if friendship_duration_param != 0 else default_param_addition / 2
         # Setting Account Overall Trust Value
-        if self.name == "Yossi Cohen":
-            print("UTV: "+str(user_trust_value))
-            print(threshold.connection_threshold.friendship_duration)
-            print(friendship_duration_param)
-            print("CTV: " + str(connection_trust_value))
-            print("resemblance: " + str(resemblance_attributes_param))
+        # if self.name == "Yossi Cohen":
+        #     print("UTV: "+str(user_trust_value))
+        #     print(threshold.connection_threshold.friendship_duration)
+        #     print(friendship_duration_param)
+        #     print("CTV: " + str(connection_trust_value))
+        #     print("resemblance: " + str(resemblance_attributes_param))
         self.account_trust_value = (user_trust_value + connection_trust_value) / 2
 
     @classmethod

@@ -6,10 +6,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import time
 import csv
+grades = {"מטעה": 0, "נכון": 1, "נכון ברובו": 2, "חצי נכון": 3, "לא נכון ברובו": 4, "לא נכון": 5}
 
 
 def gather_info(post):
-    grades = {"מטעה": 0, "נכון": 1, "נכון ברובו": 2, "חצי נכון": 3, "לא נכון ברובו": 4, "לא נכון": 5}
     person_n_job = post.find_element_by_class_name("figure-position")
     person_n_job_arr = person_n_job.text.split('\n')
     person = person_n_job_arr[0]
