@@ -14,6 +14,7 @@
     <option name="namespacePackageFolders">
       <list>
         <option value="$MODULE_DIR$/machine_learning" />
+        <option value="$MODULE_DIR$/my-app" />
       </list>
     </option>
   </component>
