@@ -30,19 +30,26 @@ def scroll_down(driver, last_height):
     return newHeight
 
 
-def scrap(csv_writer, pages=10):
+def scrap(csv_writer, arr, count=500):
     driver = init_sel()
     driver.get("https://thewhistle.globes.co.il/feed")
     last_height = driver.execute_script("return document.body.scrollHeight")
-    for i in range(pages):
+    i=0
+    # for i in range(pages):
+    while i < count:
         new_height = scroll_down(driver, last_height)
         posts = driver.find_elements_by_class_name("card-wrapper")
         for post in posts:
             info = gather_info(post)
-            csv_writer.writerow(info)
-        if new_height == last_height:
-            break
+            if info not in arr:
+                arr.insert(i, info)
+                csv_writer.writerow(info)
+                i += 1
+                print(i)
+        # if new_height == last_height:
+        #     break
         last_height = new_height
+    driver.quit()
 
 
 def init_sel():
@@ -56,6 +63,7 @@ if __name__ == "__main__":
     file = open('mashrokit.csv', 'w', encoding='UTF8')
     writer = csv.writer(file)
     writer.writerow(['person', 'job', 'label', 'theme', 'text'])
-    scrap(writer)
+    arr = []
+    scrap(writer, arr)
     file.close()
     print("done")
