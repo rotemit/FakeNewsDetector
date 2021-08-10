@@ -53,9 +53,9 @@ def init_sel():
 
 
 if __name__ == "__main__":
-    file = open('mashrokit.csv', 'w', encoding='UTF8')
+    file = open('mashrokit.csv', 'w+', encoding='UTF8')
     writer = csv.writer(file)
     writer.writerow(['person', 'job', 'label', 'theme', 'text'])
-    scrap(writer)
+    scrap(writer, 40)
     file.close()
     print("done")
