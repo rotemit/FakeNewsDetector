@@ -1,7 +1,5 @@
 import csv
-
 from flask import Flask, request
-from machine_learning.scrap_posts import scrap_posts
 import pandas as pd
 
 # try:
