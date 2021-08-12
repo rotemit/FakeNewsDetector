@@ -6,7 +6,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import time
 import csv
+import datetime
+
 grades = {"מטעה": 0, "נכון": 1, "נכון ברובו": 2, "חצי נכון": 3, "לא נכון ברובו": 4, "לא נכון": 5}
+heb_months = {"ינו׳": 1, "פבר׳": 2, "מרץ": 3, "אפר׳": 4, "מאי": 5, "יוני": 6, "יולי": 7, "אוג׳": 8, "ספט׳": 9, "אוק׳": 10, "נוב׳": 11, "דצמ׳": 12}
 
 
 def gather_info(post):
@@ -20,7 +23,13 @@ def gather_info(post):
     theme = themes.text.replace(":", "")
     quote = post.find_element_by_class_name("main-quote")
     text = quote.text.replace("\"", "")
-    return [person, job, grade, theme, text]
+    date_arr = post.find_element_by_class_name("date-wrapper").text.split(' ')
+    day = int(date_arr[0])
+    year = int(date_arr[2])
+    month = heb_months.get(date_arr[1])
+    post_date = datetime.date(year, month, day)
+
+    return [person, job, grade, theme, text, post_date]
 
 
 def scroll_down(driver, last_height):
@@ -30,7 +39,7 @@ def scroll_down(driver, last_height):
     return newHeight
 
 
-def scrap(csv_writer, pages=10):
+def scrap(csv_writer, pages=10, date=None):
     driver = init_sel()
     driver.get("https://thewhistle.globes.co.il/feed")
     last_height = driver.execute_script("return document.body.scrollHeight")
@@ -40,22 +49,29 @@ def scrap(csv_writer, pages=10):
         for post in posts:
             info = gather_info(post)
             csv_writer.writerow(info)
+            if date is not None:
+                if info[5] < date:
+                    return
         if new_height == last_height:
-            break
+            return
         last_height = new_height
 
 
 def init_sel():
     PATH = "C:\Program Files (x86)\chromedriver.exe"
-    driver = webdriver.Chrome(PATH)
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    driver = webdriver.Chrome(PATH, options=options)
+    # driver = webdriver.Chrome(PATH)
     driver.maximize_window()
+
     return driver
 
 
 if __name__ == "__main__":
     file = open('mashrokit.csv', 'w+', encoding='UTF8')
     writer = csv.writer(file)
-    writer.writerow(['person', 'job', 'label', 'theme', 'text'])
-    scrap(writer, 40)
+    writer.writerow(['person', 'job', 'label', 'theme', 'text', 'date'])
+    scrap(writer, date=datetime.date(2021, 1, 1))
     file.close()
     print("done")
