@@ -15,8 +15,7 @@ def parse_rec(account):
             connection = Connection(connection["attributes"], connection["friendship_duration"], connection["mutual_friends"])
             user = account["friends"][field][i]["user"]
             user = User(user["total_friends"], user["age_of_account"])
-            friends = parse_rec(account["friends"][field][i])
-            dict[field].append(Account(name, friends, connection, user))
+            dict[field].append(Account(name, connection, user))
     return dict
 
 

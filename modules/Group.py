@@ -1,7 +1,7 @@
 from .Threshold import GroupThreshold
 
 class Group:
-    def __init__(self,group_name, attributes,  age_of_group, friends, mutual_friends=0):
+    def __init__(self, group_name, attributes,  age_of_group, friends, mutual_friends=0):
         self.group_name = group_name
         self.attributes = attributes
         self.age_of_group = age_of_group

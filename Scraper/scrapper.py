@@ -4,15 +4,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from modules.Connection import Connection
 from modules.Account import account_encoder
-from modules.User import User
 from modules.Page import Page
 from modules.Group import Group
-
+from modules.Account import Account
+from modules import Threshold
 import time
 from datetime import date
-from modules.Account import Account
+
 import json
 
 """
@@ -32,7 +31,7 @@ to_english = "/?locale2=en_US"
 """
 def init_sel():
     options = webdriver.ChromeOptions()
-    # options.add_argument('lang=en-US')
+    options.add_argument('headless')
     PATH = "C:\Program Files (x86)\chromedriver.exe"
     driver = webdriver.Chrome(PATH, options=options)
     driver.maximize_window()
@@ -43,7 +42,7 @@ def init_sel():
     login in into Facebook with the giver email and password
     we use the "send_keys" method to type the given arguments
 """
-def login(driver, email, password):
+def login(driver, user_name, email, password):
     driver.get("https://www.facebook.com")
     search_email = driver.find_element_by_id("email")
     time.sleep(2)
@@ -55,7 +54,16 @@ def login(driver, email, password):
     search_button = redirect_by_xpath(driver, "//div[@class='_6ltg']")
     search_button[0].click()
     time.sleep(3)
+    global is_logged_in
     is_logged_in = True
+    if user_name is not None:
+        redirect(driver,user_name)
+        time.sleep(2)
+        redirect(driver, user_name)
+        time.sleep(1)
+        redirect(driver, 'About')
+        time.sleep(2)
+        return extract_profile_attributes(driver)
 
 
 # not sure why we need this, but we'll see
@@ -128,24 +136,27 @@ def extract_total_friends(driver):
         return -1
     return int(temp[2])
 
+def extract_profile_attributes(driver):
+    summary = {}
+    fields = ['work', 'education', 'current_town', 'homeTown', 'status']
+    if is_logged_in:
+        elements = redirect_by_xpath(driver, "//div[@class='c9zspvje']")
+    else:
+        elements = redirect_by_xpath(driver, "//div[@class='dati1w0a tu1s4ah4 f7vcsfb0 discj3wi']/div")
+    time.sleep(2)
+    for i in range(len(elements)):
+        temp_data = elements[i].text.partition("\nShared")
+        if temp_data[0] != '' and not temp_data[0].startswith('Add ') and not temp_data[0].startswith('No ') and not temp_data[0].startswith('Edit '):
+            summary[fields[i]] = temp_data[0]
+    return summary
+
 """
     this method extract the profile summary of the page it is on,
     which consists of details the user chose to share, user's total friends, and the age of the user's account.
 """
 def extract_profile_summary(driver):
-    summary = {}
-    fields = ['work', 'education', 'current_town', 'homeTown', 'status']
     try:
-        if is_logged_in:
-            elements = redirect_by_xpath(driver, "//div[@class='c9zspvje']")
-
-        else:
-            elements = redirect_by_xpath(driver, "//div[@class='dati1w0a tu1s4ah4 f7vcsfb0 discj3wi']/div")
-        time.sleep(2)
-        for i in range(len(elements)):
-            temp_data = elements[i].text.partition("\nShared")
-            if temp_data[0] != '' and not temp_data[0].startswith('Add ') and not temp_data[0].startswith('No '):
-                summary[fields[i]] = temp_data[0]
+        summary = extract_profile_attributes(driver)
     except:
         summary = None
     try:
@@ -383,7 +394,7 @@ def int_from_human_format(x):
 
 def get_page_numbers(driver):
     likes = None
-    mutuals = None
+    mutuals = 0
     follows = None
     last_resort = 0
 
@@ -476,6 +487,8 @@ def check_url(url):
     if url[len(url)-1] == '/':
         return  url[0:len(url)-1]
     return url
+
+
 """
     This method gather all the information about an account
 """
@@ -498,8 +511,7 @@ def scrap_account(driver, account_url):
     else:
         friendship_duration = None
         mutual_friends = None
-    return Account(user_name, Connection(attributes, friendship_duration, mutual_friends),
-            User(total_friends, age_of_account))
+    return Account(user_name, attributes, total_friends, age_of_account, friendship_duration, mutual_friends)
 
 
 def scrap_page(driver, page_url):
@@ -510,9 +522,19 @@ def scrap_page(driver, page_url):
         driver.get(page_url + to_english)
     time.sleep(2)
     mutual_friends = None
+    page_age = 0
+    attributes = None
+    followers = 0
+    likes = 0
     try:
         name = driver.find_element_by_xpath(
-            "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
+            "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t g5gj957u d2edcug0 hpfvmrgz on77hlbc buofh1pr o8rfisnq ph5uu5jm b3onmgus ihqw7lf3 ecm0bbzt']")
+    except:
+        name=""
+    try:
+        if name == "":
+            name = driver.find_element_by_xpath(
+                "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
         page_name = name.text.split('\n')[0]
         print("Name: " + page_name)
         attributes = get_page_summary(driver)
@@ -572,11 +594,16 @@ Main function, we should enter the user name, email and password of the wanted r
 '''
 if __name__ == '__main__':
     driver = init_sel()
-    # login(driver, "ofrishani10@walla.com", "Is5035")
+    # user_summary = login(driver, "Ofri Shani", "ofrishani10@walla.com", "Is5035")
+    # login(driver, None, "ofrishani10@walla.com", "Is5035")
     # account = scrap_account(driver, "https://www.facebook.com/Gilad.Agam")
     # page = scrap_page(driver, "https://www.facebook.com/TheShadow69")
-    # page = scrap_page(driver, "https://www.facebook.com/hapshuta")
-    group = scrap_group(driver, "https://www.facebook.com/groups/bathefer1")
+    page = scrap_page(driver, "https://www.facebook.com/hapshuta")
+    # group = scrap_group(driver, "https://www.facebook.com/groups/bathefer1")
     with open('BasicGraph.json', 'w', encoding='UTF8') as outfile:
-        json.dump(group, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
+        json.dump(page, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
     driver.quit()
+    # account.set_trust_value(Threshold.AccountThreshold("", user_summary, 23.82, 244.34, 17.12, 37))
+    # print(account.account_trust_value)
+    # page.set_trust_value(Threshold.PageThreshold("", 244.34, [], 23.82, 0, 37))
+    # print(page.page_trust_value)
