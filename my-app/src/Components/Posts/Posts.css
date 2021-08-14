@@ -1,0 +1,16 @@
+.post {
+    font: bold;
+    font-size: x-large;
+    align-items: baseline;
+    text-align: right;
+    
+}
+
+.list {
+    list-style-type: decimal;
+    align-self: start;
+    direction: rtl;
+    margin: 10px;
+    font: bold;
+    font-size: x-large;
+  }
