@@ -12,7 +12,10 @@ export const Posts = ({posts}) => {
 //   );
     return (
         <ul className='list'>
-            {posts.map((post) => <li className='post' key={post}> {post}</li>)}
+            {posts.map((post) => 
+            <li className='post' key={post}>
+                {post}  <br/>   
+            </li>)}
         </ul>
     )
 }
