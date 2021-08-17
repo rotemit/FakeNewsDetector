@@ -43,18 +43,28 @@ def scrap(csv_writer, pages=10, date=None):
     driver = init_sel()
     driver.get("https://thewhistle.globes.co.il/feed")
     last_height = driver.execute_script("return document.body.scrollHeight")
-    for i in range(pages):
-        new_height = scroll_down(driver, last_height)
-        posts = driver.find_elements_by_class_name("card-wrapper")
-        for post in posts:
-            info = gather_info(post)
-            csv_writer.writerow(info)
-            if date is not None:
+    if date is not None:
+        while True:
+            new_height = scroll_down(driver, last_height)
+            posts = driver.find_elements_by_class_name("card-wrapper")
+            for post in posts:
+                info = gather_info(post)
+                csv_writer.writerow(info)
                 if info[5] < date:
                     return
-        if new_height == last_height:
-            return
-        last_height = new_height
+            if new_height == last_height:
+                return
+            last_height = new_height
+    else:
+        for i in range(pages):
+            new_height = scroll_down(driver, last_height)
+            posts = driver.find_elements_by_class_name("card-wrapper")
+            for post in posts:
+                info = gather_info(post)
+                csv_writer.writerow(info)
+            if new_height == last_height:
+                return
+            last_height = new_height
 
 
 def init_sel():
@@ -68,10 +78,22 @@ def init_sel():
     return driver
 
 
-if __name__ == "__main__":
+def start_scraping(pages=None, date=None):
     file = open('mashrokit.csv', 'w+', encoding='UTF8')
     writer = csv.writer(file)
     writer.writerow(['person', 'job', 'label', 'theme', 'text', 'date'])
-    scrap(writer, date=datetime.date(2021, 1, 1))
+    if date is not None:
+        scrap(writer, date=date)
+    elif pages is not None:
+        scrap(writer, pages=pages)
+    else:
+        scrap(writer)
+
     file.close()
     print("done")
+
+
+if __name__ == "__main__":
+    start_scraping(date=datetime.date(2021, 1, 1))
+
+
