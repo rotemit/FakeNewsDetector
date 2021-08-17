@@ -14,7 +14,7 @@ def scrap_posts(type, url, write, num=10):
         posts = get_posts(account=url)
     for post in posts:
         if post['post_text'] is not None and post['post_text'] != '':
-            writer.writerow([post['post_id'], post['post_text'].replace("\n", ' '), post['time'], post['username']])
+            write.writerow([post['post_id'], post['post_text'].replace("\n", ' '), post['time'], post['username']])
             counter += 1
         if counter == num:
             break

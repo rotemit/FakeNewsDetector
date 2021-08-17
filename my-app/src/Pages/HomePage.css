@@ -10,3 +10,7 @@
     width: 50%;
     padding: 10px;
 }
+
+.list {
+  list-style-type: circle;
+}
