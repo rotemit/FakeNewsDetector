@@ -49,9 +49,9 @@ def scrap(csv_writer, pages=10, date=None):
             posts = driver.find_elements_by_class_name("card-wrapper")
             for post in posts:
                 info = gather_info(post)
-                csv_writer.writerow(info)
                 if info[5] < date:
                     return
+                csv_writer.writerow(info)
             if new_height == last_height:
                 return
             last_height = new_height
@@ -94,6 +94,6 @@ def start_scraping(pages=None, date=None):
 
 
 if __name__ == "__main__":
-    start_scraping(date=datetime.date(2021, 1, 1))
+    start_scraping(date=datetime.date(2020, 1, 1))
 
 

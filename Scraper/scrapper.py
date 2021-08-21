@@ -19,7 +19,8 @@ import json
 """
 is_logged_in = False
 year_not_registered = "//*[contains(text(),'Born on ') or contains(text(),'No posts available')]"
-friendship_duration_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh oo9gr5id hzawbc8m']"
+friendship_duration_xpath = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 pfnyh3mw jifvfom9 gs1a9yip owycx6da btwxx1t3 discj3wi b5q2rw42 lq239pai mysgfdmx hddg9phg']"
+# friendship_duration_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh oo9gr5id hzawbc8m']"
 name_of_page = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t g5gj957u d2edcug0 p01isnhg rj1gh0hx dtpq6qua p8fzw8mz pcp91wgn ihqw7lf3 ipjc6fyt']"
 name_of_page_1 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 l1jc4y16 fe6kdd0r mau55g9w c8b282yb rwim8176 mhxlubs3 p5u9llcw hnhda86s oo9gr5id oqcyycmt']"
 name_of_page_2 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 embtmqzv fe6kdd0r mau55g9w c8b282yb hrzyx87i m6dqt4wy h7mekvxk hnhda86s oo9gr5id hzawbc8m']"
@@ -42,7 +43,7 @@ def init_sel():
     login in into Facebook with the giver email and password
     we use the "send_keys" method to type the given arguments
 """
-def login(driver, user_name, email, password):
+def login(driver, user_url, email, password):
     driver.get("https://www.facebook.com")
     search_email = driver.find_element_by_id("email")
     time.sleep(2)
@@ -56,12 +57,16 @@ def login(driver, user_name, email, password):
     time.sleep(3)
     global is_logged_in
     is_logged_in = True
-    if user_name is not None:
-        redirect(driver,user_name)
-        time.sleep(2)
-        redirect(driver, user_name)
-        time.sleep(1)
-        redirect(driver, 'About')
+    if user_url is not None:
+        driver.get(user_url + '/about')
+        # redirect(driver,user_name)
+        # time.sleep(2)
+        # redirect(driver, user_name)
+        # time.sleep(1)
+        # print("url1: " + driver.current_url)
+        # driver.get(driver.current_url + '/about')
+        # print("url2: " + driver.current_url)
+        # redirect(driver, 'About')
         time.sleep(2)
         return extract_profile_attributes(driver)
 
@@ -106,9 +111,9 @@ def redirect(driver, next_page, initial_click=True):
     can cause errors, if elements is not found after the waited time.
 """
 def redirect_by_xpath(driver, xpath):
-    time.sleep(0.5)
+    time.sleep(1)
     try:
-        sleep_time = 7
+        sleep_time = 10
         if xpath == year_not_registered:
             sleep_time = 3
         element = WebDriverWait(driver, sleep_time).until(
@@ -130,7 +135,7 @@ def extract_total_friends(driver):
         for elem in menu:
             if 'Friend' in elem.text:
                 total_friends = elem.text
-    print("total: "+total_friends)
+    # print("total: "+total_friends)
     temp = total_friends.partition("Friends\ufeff")
     if temp[2] == '':
         return -1
@@ -140,13 +145,20 @@ def extract_profile_attributes(driver):
     summary = {}
     fields = ['work', 'education', 'current_town', 'homeTown', 'status']
     if is_logged_in:
+        # print("url: " + driver.current_url)
+        # if "about" not in str(driver.current_url):
+        #     driver.get(driver.current_url + '/about')
+        #     time.sleep(2)
+
+        # print("elem len: "+str(len(elements)))
         elements = redirect_by_xpath(driver, "//div[@class='c9zspvje']")
+        # elements = driver.find_elements_by_xpath("//div[@class='c9zspvje']")
     else:
         elements = redirect_by_xpath(driver, "//div[@class='dati1w0a tu1s4ah4 f7vcsfb0 discj3wi']/div")
-    time.sleep(2)
+    time.sleep(4)
     for i in range(len(elements)):
         temp_data = elements[i].text.partition("\nShared")
-        if temp_data[0] != '' and not temp_data[0].startswith('Add ') and not temp_data[0].startswith('No ') and not temp_data[0].startswith('Edit '):
+        if temp_data[0] != '' and not temp_data[0].startswith('Add ') and not temp_data[0].startswith('No ') and "Mobile" not in temp_data[0]:
             summary[fields[i]] = temp_data[0]
     return summary
 
@@ -167,9 +179,9 @@ def extract_profile_summary(driver):
         age_of_account = get_age_of_account(driver)
     else:
         age_of_account = None
-    print(summary)
-    print("number of friends: " + str(total_friends))
-    print("Age: " + str(age_of_account) + " days old")
+    # print(summary)
+    # print("number of friends: " + str(total_friends))
+    # print("Age: " + str(age_of_account) + " days old")
     return summary, total_friends, age_of_account
 
 #scraping the "about" page
@@ -191,7 +203,7 @@ def extract_friendship_duration(driver):
     upper_navigation_bar[len(upper_navigation_bar) - 1].click()
     isFriend = redirect(driver, 'See Friendship', False)
     if isFriend is False:
-        print("not friends")
+        # print("not friends")
         return 0
     all_common_fields = redirect_by_xpath(driver, friendship_duration_xpath)
     for field in all_common_fields:
@@ -217,7 +229,7 @@ def extract_mutual_friends(driver, is_friend):
         if searching_string in field.text:
             mutual_friends_arr = field.text.split(' ')
             mutual_friends = int(mutual_friends_arr[0])
-            print("mutual friends: " + str(mutual_friends))
+            # print("mutual friends: " + str(mutual_friends))
             return mutual_friends
     return 0
 
@@ -314,7 +326,7 @@ def get_age_of_account(driver):
             else:
                 redirect_by_xpath(driver, "//span[text()='" + str(mid) + "']")[0].click()
             mid = left + (right - left) // 2
-            print('clicking on year - ' + str(mid))
+            # print('clicking on year - ' + str(mid))
             redirect_by_xpath(driver, "//span[text()='" + str(mid) + "']")[0].click()
             redirect_by_xpath(driver, "//span[text()='Done']")[0].click()
             time.sleep(1)
@@ -501,7 +513,7 @@ def scrap_account(driver, account_url):
     time.sleep(2)
     name = driver.find_element_by_xpath("//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
     user_name = name.text
-    print("name: " + user_name)
+    # print("name: " + user_name)
     friendship_duration = 0
     mutual_friends = 0
     attributes, total_friends, age_of_account = scrap_about(driver)
@@ -536,13 +548,13 @@ def scrap_page(driver, page_url):
             name = driver.find_element_by_xpath(
                 "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
         page_name = name.text.split('\n')[0]
-        print("Name: " + page_name)
+        # print("Name: " + page_name)
         attributes = get_page_summary(driver)
-        print("attributes: " + str(attributes))
+        # print("attributes: " + str(attributes))
         page_age = get_age_of_page(driver)
-        print("age: " + str(page_age))
+        # print("age: " + str(page_age))
         followers, likes, mutual_friends = get_page_numbers(driver)
-        print("followers: " + str(followers) + " likes: " + str(likes) + " mutuals: " + str(mutual_friends))
+        # print("followers: " + str(followers) + " likes: " + str(likes) + " mutuals: " + str(mutual_friends))
     except:
         name = driver.find_element_by_xpath("//span[@class='_kao']")
         page_name = name.text
@@ -575,35 +587,107 @@ def scrap_group(driver, group_url):
     time.sleep(2)
     name = driver.find_element_by_xpath(name_of_page)
     group_name = name.text.split('\n')[0]
-    print("Name: " + group_name)
+    # print("Name: " + group_name)
     attributes = gather_group_attributes(driver)
-    print("attributes: " + str(attributes))
+    # print("attributes: " + str(attributes))
     group_age = get_age_of_group(driver)
-    print("age: " + str(group_age))
+    # print("age: " + str(group_age))
     friends_num = get_friends_num_of_group(driver)
-    print("number of friends: " + str(friends_num))
+    # print("number of friends: " + str(friends_num))
     mutuals = None
     if is_logged_in:
         mutuals = get_mutuals_group(driver)
-    print("number of mutuals: " + str(mutuals))
+    # print("number of mutuals: " + str(mutuals))
 
     return Group(group_name, attributes, group_age, friends_num, mutuals)
+
+def scroll_over_posts(driver, elements_xpath, num, arr):
+    # using the method of "send_keys" to type the END key to get to the end of the page.
+    counter = 0
+    index = len(arr)
+    actions = ActionChains(driver)
+    elements = driver.find_elements_by_xpath(elements_xpath)
+    old_elements_amount = len(elements)
+    while counter < num:
+        time.sleep(2)
+        actions.send_keys(Keys.END)
+        actions.perform()
+        elements = driver.find_elements_by_xpath(elements_xpath)
+        for post in elements:
+            if post.text != "":
+                if "See More" in post.text:
+                    try:
+                        more = post.find_element_by_xpath("//div[text()='See More']")
+                        webdriver.ActionChains(driver).move_to_element(more).click(more).perform()
+                    except:
+                        pass
+                text = post.text.replace('\n', ' ')
+                if text not in arr and text != '':
+                    arr.insert(index, text)
+                    index += 1
+                    counter += 1
+        if len(elements) == old_elements_amount:
+            break
+        old_elements_amount = len(elements)
+    # return elements[len(elements) - 1].text
+
+def scrap_posts(driver, account_url, num):
+    driver.get(account_url)
+    time.sleep(2)
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    arr = []
+    while len(arr) < num:
+        scroll_over_posts(driver, "//div[@class='kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q']", num, arr)
+    return arr
+
+
+def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, loging_in=False, user_url=None, user_mail=None, user_password=None):
+    driver = init_sel()
+    user_summary = {}
+
+    # we only need summary if we check account right now,
+    # so if there is no user_name the function will not get the summary
+    if url_account is None:
+        user_url = None
+
+    if loging_in:
+        user_summary = login(driver, user_url, user_mail, user_password)
+
+    if url_account is not None:
+        account = scrap_account(driver, url_account)
+        if posts > 0:
+            posts = scrap_posts(driver, url_account, posts)
+            account.set_posts(posts)
+        with open('BasicGraphAccount.json', 'w', encoding='UTF8') as outfile:
+            json.dump(account, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
+        account.set_trust_value(Threshold.AccountThreshold("", user_summary, 23.82, 244.34, 17.12, 37))
+        print(account)
+        print("trust value of account: " + str(account.account_trust_value))
+
+    if url_page is not None:
+        page = scrap_page(driver, url_page)
+        with open('BasicGraphPage.json', 'w', encoding='UTF8') as outfile:
+            json.dump(page, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
+        print(page)
+
+    if url_group is not None:
+        group = scrap_group(driver, url_group)
+        with open('BasicGraphGroup.json', 'w', encoding='UTF8') as outfile:
+            json.dump(group, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
+        print(group)
+
+    driver.quit()
+
+
 
 '''
 Main function, we should enter the user name, email and password of the wanted root user
 '''
 if __name__ == '__main__':
-    driver = init_sel()
-    # user_summary = login(driver, "Ofri Shani", "ofrishani10@walla.com", "Is5035")
-    # login(driver, None, "ofrishani10@walla.com", "Is5035")
-    # account = scrap_account(driver, "https://www.facebook.com/Gilad.Agam")
-    # page = scrap_page(driver, "https://www.facebook.com/TheShadow69")
-    page = scrap_page(driver, "https://www.facebook.com/hapshuta")
-    # group = scrap_group(driver, "https://www.facebook.com/groups/bathefer1")
-    with open('BasicGraph.json', 'w', encoding='UTF8') as outfile:
-        json.dump(page, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
-    driver.quit()
-    # account.set_trust_value(Threshold.AccountThreshold("", user_summary, 23.82, 244.34, 17.12, 37))
-    # print(account.account_trust_value)
-    # page.set_trust_value(Threshold.PageThreshold("", 244.34, [], 23.82, 0, 37))
-    # print(page.page_trust_value)
+    scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
+
+    # page: "https://www.facebook.com/TheShadow69")
+    # page: "https://www.facebook.com/hapshuta")
+    # "https://www.facebook.com/groups/bathefer1")
+    # post-link: "https://www.facebook.com/permalink.php?story_fbid=1510260152643112&id=100009774256825")
+    # "https://www.facebook.com/Gilad.Agam"

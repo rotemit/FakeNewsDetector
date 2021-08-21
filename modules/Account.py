@@ -14,13 +14,16 @@ class Account:
 
     def __str__(self):
         return "Name: " + str(self.name) + "\n" \
-               + "attributes: " + str(self.attributes)+ "\nFriendship Duration:" + str(self.friendship_duration) \
-               + "\nNumber of Mutual Friends:" + str(self.mutual_friends) + "\n" + str(self.user) + \
-               "Total Friends: " + str(self.total_friends) + "\nAge Of Account:  " + str(self.age_of_account)
+               + "attributes: " + str(self.attributes)+ "\nFriendship Duration: " + str(self.friendship_duration) \
+               + "\nNumber of Mutual Friends: " + str(self.mutual_friends) + "\nTotal Friends: " + \
+                str(self.total_friends) + "\nAge Of Account:  " + str(self.age_of_account) + \
+                "\nposts: " + str(self.posts)
 
     # def set_mutual_friends(self, number_of_friends):
     #     self.connection.set_mutual_friends(number_of_friends)
 
+    def set_posts(self, posts_arr):
+        self.posts = posts_arr
 
     #not sure if needed
     def calc_resemblance_attributes(self, ego_node_attributes):

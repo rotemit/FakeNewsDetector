@@ -21,16 +21,17 @@ def scrap_posts(type, url, write, num=10):
 
 
 # https://pypi.org/project/facebook-scraper/#description
-# if __name__ == "__main__":
-#     file = open('file.csv', 'w', encoding='UTF8')
-#     writer = csv.writer(file)
-#     writer.writerow(['post_id', 'post_text', 'date', 'writer', 'label'])
-#     scrap_posts("account", "Netanyahu", writer, 20)
-#     scrap_posts("account", "NaftaliBennett", writer)
-#     scrap_posts("account", "miri.regev.il", writer)
-#     scrap_posts("account", "MichaeliMerav", writer)
-#     scrap_posts("page", "Meretz", writer)
-#     scrap_posts("account", "BeGantz", writer)
-#     scrap_posts("account", "YairLapid", writer, 20)
-#     file.close()
-#     print("done")
+if __name__ == "__main__":
+    file = open('file.csv', 'w', encoding='UTF8')
+    writer = csv.writer(file)
+    writer.writerow(['post_id', 'post_text', 'date', 'writer', 'label'])
+    # scrap_one_post("https://www.facebook.com/permalink.php?story_fbid=1510260152643112&id=100009774256825")
+    # scrap_posts("account", "Netanyahu", writer, 20)
+    # scrap_posts("account", "NaftaliBennett", writer)
+    # scrap_posts("account", "miri.regev.il", writer)
+    # scrap_posts("account", "MichaeliMerav", writer)
+    # scrap_posts("page", "Meretz", writer)
+    # scrap_posts("account", "BeGantz", writer)
+    # scrap_posts("account", "YairLapid", writer, 20)
+    file.close()
+    print("done")
