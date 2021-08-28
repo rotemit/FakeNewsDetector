@@ -1,12 +1,13 @@
 {
-    "page_name": "הפשוטע",
-    "age_of_page": 1664,
-    "attributes": [
-        "Contact הפשוטע on Messenger",
-        "www.instagram.com/hapshutaofficial",
-        "Fictional Character"
-    ],
-    "followers": 247489,
-    "num_of_likes": 222525,
-    "mutual_friends": null
+    "name": "Gilad Agam",
+    "attributes": {
+        "work": "Worked at Israel Defense Forces",
+        "education": "Studies at Ben-Gurion University of the Negev\nStarted in 2017",
+        "current_town": "Lives in Kadimah, Hamerkaz, Israel",
+        "homeTown": "From Kadimah, Hamerkaz, Israel"
+    },
+    "total_friends": 709,
+    "age_of_account": 4244,
+    "friendship_duration": 471,
+    "mutual_friends": 5
 }
