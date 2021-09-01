@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+
+import SentimentAnalysis.analyzer.PotentialFakeNewsAnalysis
 from modules.Account import account_encoder
 from modules.Page import Page
 from modules.Group import Group
@@ -11,6 +13,7 @@ from modules.Account import Account
 from modules import Threshold
 import time
 from datetime import date
+from SentimentAnalysis.analyzer.PotentialFakeNewsAnalysis import analyze_user
 
 import json
 
@@ -722,6 +725,8 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
         account.set_trust_value(Threshold.AccountThreshold("", user_summary, 23.82, 244.34, 17.12, 37))
         print(account)
         print("trust value of account: " + str(account.account_trust_value))
+        print(analyze_user(account))
+
 
     if url_page is not None:
         page = scrap_page(driver, url_page)
@@ -738,12 +743,10 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
     driver.quit()
 
 
-
-'''
-Main function, we should enter the user name, email and password of the wanted root user
-'''
 if __name__ == '__main__':
-    scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
 
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")

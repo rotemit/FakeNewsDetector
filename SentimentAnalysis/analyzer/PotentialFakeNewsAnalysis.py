@@ -1,12 +1,14 @@
 import re
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from googletrans import Translator
 from data_contracts.analysis_result import AnalysisResult
-translator = Translator()
+from modules import Account
+from deep_translator import GoogleTranslator
+
 sid = SentimentIntensityAnalyzer()
 
-def analyze_user(fb_user):
+
+def analyze_user(fb_user:Account):
     posts = fb_user.posts
     potentialFakePostsNum = 0
     postsNum = len(posts) # get total posts num  
@@ -39,8 +41,9 @@ def check_fake_potential(post):
     fake_threshold_super_high = 0.8
     fake_threshold_high = 0.7
     fake_threshold_mid = 0.5
-    englishText = translator.translate(post).text   # translate text
-
+    print(post)
+    englishText = GoogleTranslator(source='he', target='en').translate(post)
+    print(englishText)
     # auto analysis by nltk
     sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
     print(sentimentDict)
