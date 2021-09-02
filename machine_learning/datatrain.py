@@ -13,15 +13,51 @@ from sklearn import svm
 from sklearn import metrics
 from sklearn.feature_extraction.text import HashingVectorizer
 
+from deep_translator import GoogleTranslator #pip installed
+
+
 #manual data for testing
 data = [
-    ['1', 'ילדים חכמים אוהבים שוקולד'],
-    ['2', 'ילדים חכמים אוהבים ילדים חכמים'],
-    ['1', 'ילדות חכמות אוהבות שוקולד'],
-    ['1', 'ילדים חכמים אוהבים לחקור שוקולד'],
-    ['2', 'ילדות חכמות אוהבות רצים מהר'],
-    ['1', 'ילדות אוהבות רצים']
+    # ['1', 'ילדים חכמים אוהבים שוקולד'],
+    # ['2', 'ילדים חכמים אוהבים ילדים חכמים'],
+    # ['1', 'ילדות חכמות אוהבות שוקולד'],
+    # ['1', 'ילדים חכמים אוהבים לחקור שוקולד'],
+    # ['2', 'ילדות חכמות אוהבות רצים מהר'],
+    # ['1', 'ילדות אוהבות רצים']
 ]
+
+
+'''
+    posts we took from facebook for testing
+'''
+covid_posts = [
+    ['"לא ידענו שזה השלום האחרון": יותר מ-550 חולי קורונה נפטרו החודש בישראל. בני המשפחה, החברים וגם בעלי החיים לא מפסיקים להתגעגע'], #kan news
+    ['מבצע החיסונים מוצלח מאוד, הן בקצבו והן בתוצאותיו. לאור זאת, אנחנו מרחיבים את האפשרות לקבל חיסון שלישי לכלל האוכלוסייה, ובתנאי שחלפו 5 חודשים מאז המנה השנייה. צאו להתחסן, בין אם זה חיסון ראשון, שני או שלישי - זה חשוב לכל אחד מכם וזה חשוב לכולנו כאוכלוסייה!'], #health ministry
+    ['תראו איך מרעילים את הילדים באמצעות הבדיקה ששלחו לנו מבתי הספר והגנים!!!!🙄 לא לעשות!!!!'], #נפגעי חיסון הקורונה
+    ['פייזר. ארגון פשע חוקי. שוחד, הסתרת נזקים, ייצור והפצה של סמים פסיכיאטריים ושאר רעלים במסווה של ״רפואה״ וקנסות של מאות מיליוני דולרים (רק על מה שהם נתפסו).'], #mor sagmon page
+    ['אז לגבי המרכיבים שבזריקות, מסתבר שישנם רכיבים שלא דווחו'],  #vaccine choice il
+    ['פנינים שנאמרו בזום המורים. ושימו לב, 25% מבעלי התו הירוק קיבלו פלסיבו'],  #vaccine choice il
+    ['קונספירציה חדשה: הבדיקות המהירות שחילקו בבתי הספר הם לא ל covid 19. עבדו עלינו, זה לסארס 2!!!!! אנשים הזויים. יכול להבין שאנשים לא יודעים סתם ככה, אבל מה קשה לעשות גוגל?!'],  #מה כבר יכול לקרות
+    ['Covid-19 מסוכן'],  #rotem
+    ['Covid-19 גורמת למוות'],  #rotem
+    ['ארגון הבריאות העולמי מכנה רשמית את הקורונה בתור קוביד-19'],  #
+    ['תמונה מראה אנשים שנדבקו בקורונה שוכבים על המדרכה בסין'],  #
+    ['כשבועיים מאז החל מבצע החיסונים בחיסון השלישי, חצתה היום מדינת ישראל את רף מיליון המתחסנים בחיסון השלישי. מדובר ביותר ממחצית האוכלוסייה ברת החיסון (כ-1.9 מיליון בני 50+, שחלפו חמישה חודשים מאז קיבלו את מנת החיסון השנייה).'],  #
+    # [''],  #
+    # [''],  #
+    # [''],  #
+    # [''],  #
+    # [''],  #
+]
+
+'''
+    manual tests for svm
+'''
+def our_svm_tests(tfidf_vectorizer, svm_classifier):
+    for post in covid_posts:
+        en_post = GoogleTranslator(source='he', target='en').translate(post[0])
+        grade = grade_post(en_post, tfidf_vectorizer, svm_classifier)
+        print('Post: '+en_post+'\nGrade: '+str(grade)+'\n')
 
 
 def our_manual_tests():
@@ -102,8 +138,9 @@ def our_svm(tfidf_train, label_train, tfidf_valid, label_valid):
 
     #check model accuracy
     print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
-
     print(confusion_matrix(label_valid, label_prediction))
+
+    return svm_clf
 
 
 '''
@@ -120,6 +157,9 @@ def my_csv_writer():
     df = df.drop_duplicates()
     df['lemmatized_text'] = df.apply(lambda row: get_lemma(row['text']), axis=1)
     df.to_csv('my_csv_file_lemmatized.csv', encoding='utf-8', index=False)
+
+# def my_csv_modifier():
+#     with open('Constraint_Train.csv', 'a') as f:
 
 
 """
@@ -140,24 +180,52 @@ if __name__ == '__main__':
     # my_csv_writer()
     # df = pd.read_csv('my_csv_file_lemmatized.csv')
 
-    # *************** TRYING COVID ***************
+    # *************** TRYING COVID with the two files ***************
+    # print('1')
+    # df_true = pd.read_csv('trueNews.csv')
+    # print('2')
+    # df_false = pd.read_csv('fakeNews.csv')
+    # print('3')
+    # # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
+    # df_true.dropna(inplace=True)
+    # print('4')
+    # df_false.dropna(inplace=True)
+    # print('5')
+    # frames = [df_true, df_false]
+    # df = pd.concat(frames, join='inner')
+    #
+    # labels = df['Binary Label']
+    #******************************************************
+
+    #*********************DATASET: Constraint_Train *********************
+    # df = pd.read_csv('Constraint_Train.csv')
+    # labels = df['label']
+    #*********************************************************************
+
+    #********************** COMBINED DAASETS **********************************
     df_true = pd.read_csv('trueNews.csv')
     df_false = pd.read_csv('fakeNews.csv')
+    df_Constraint = pd.read_csv('Constraint_Train.csv')
     # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
     df_true.dropna(inplace=True)
     df_false.dropna(inplace=True)
-    frames = [df_true, df_false]
+    df_Constraint.dropna(inplace=True)
+    frames = [df_true, df_false, df_Constraint]
     df = pd.concat(frames, join='inner')
 
-    # labels = df_false['our_labels']
     labels = df['Binary Label']
-    # labels += df_true['Label']
+
+    #***************************************************************************
+
+
     text_train, text_valid, label_train, label_valid = train_test_split(df['Text'], labels, test_size=0.2,
                                                                         random_state=109)
     tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 1), norm=None)
     tfidf_train = tfidf_vectorizer.fit_transform(text_train)
     tfidf_valid = tfidf_vectorizer.transform(text_valid)
-    our_svm(tfidf_train, label_train, tfidf_valid, label_valid)
+    svm_classifier = our_svm(tfidf_train, label_train, tfidf_valid, label_valid)
+
+    our_svm_tests(tfidf_vectorizer, svm_classifier)
 
 
 
@@ -212,3 +280,14 @@ https://www.researchgate.net/profile/Marten-Risius/publication/326405790_Automat
 (page 11)
 we want to create different functions for each classifier, and somehow work with the different results to get a more accurate analysis
 """
+
+'''
+pages talking about covid and vaccines:
+FAKE:
+1. mor sagmon: https://www.facebook.com/mor.sagmon
+2. https://www.facebook.com/groups/VaccineChoiceIL/
+3. https://www.facebook.com/groups/173406684888542/
+
+REAL:
+1. https://www.facebook.com/groups/440665513171433/about
+'''
