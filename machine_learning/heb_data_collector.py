@@ -17,7 +17,7 @@ if __name__ == '__main__':
     posts_talkAboutEverythingGroup = get_group_posts('https://www.facebook.com/groups/503350980581730')
     posts_vaccinesAndSideEffectsLive = get_group_posts('https://www.facebook.com/groups/421434465970824/')
     posts_drLiorUngar = get_account_posts('https://www.facebook.com/dr.lior.ungar')
-    with open('heb_posts.csv', 'w', encoding='UTF8', newline='') as f:
+    with open('heb_posts.csv', 'a', encoding='UTF8', newline='') as f: #open for appending
         writer = csv.writer(f)
         writer.writerow(header)
         for post in posts_talkAboutEverythingGroup:
