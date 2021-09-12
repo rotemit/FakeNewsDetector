@@ -8,6 +8,10 @@ class Group:
         self.friends = friends
         self.mutual_friends = mutual_friends
 
+    def set_posts(self, posts_arr):
+        self.posts = posts_arr
+
     def __str__(self):
         return  "Name: " + self.group_name + "\nattributes: " + str(self.attributes) + "\nGroup Age: "+ str(self.age_of_group) + \
-                "\nNumber of Friends: " + str(self.friends) + "\nNumber of Mutual Friends:" + str(self.mutual_friends)
+                "\nNumber of Friends: " + str(self.friends) + "\nNumber of Mutual Friends: " + str(self.mutual_friends) + \
+                "\nPosts: " + str(self.posts)

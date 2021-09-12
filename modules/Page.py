@@ -12,7 +12,11 @@ class Page:
 
     def __str__(self):
         return "Name: " + self.page_name + "\nAge: " + str(self.age_of_page) + "\nFollowers: " + str(self.followers) + \
-               "\nNumber of likes:  " + str(self.num_of_likes) + "\nMutual Friends: " + str(self.mutual_friends)
+               "\nNumber of likes:  " + str(self.num_of_likes) + "\nMutual Friends: " + str(self.mutual_friends) + \
+                "\nPosts: " + str(self.posts)
+
+    def set_posts(self, posts_arr):
+        self.posts = posts_arr
 
     def set_trust_value(self, threshold: PageThreshold):
 

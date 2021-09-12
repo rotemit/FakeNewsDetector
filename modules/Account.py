@@ -19,13 +19,9 @@ class Account:
                 str(self.total_friends) + "\nAge Of Account:  " + str(self.age_of_account) + \
                 "\nposts: " + str(self.posts)
 
-    # def set_mutual_friends(self, number_of_friends):
-    #     self.connection.set_mutual_friends(number_of_friends)
-
     def set_posts(self, posts_arr):
         self.posts = posts_arr
 
-    #not sure if needed
     def calc_resemblance_attributes(self, ego_node_attributes):
         resemblance_attributes_counter = 0
         for field in ego_node_attributes:

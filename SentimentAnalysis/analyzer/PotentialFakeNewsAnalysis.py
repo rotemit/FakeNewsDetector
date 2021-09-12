@@ -1,14 +1,12 @@
 import re
-import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from data_contracts.analysis_result import AnalysisResult
-from modules import Account
+from modules.AnalysisResult import AnalysisResult
 from deep_translator import GoogleTranslator
 
 sid = SentimentIntensityAnalyzer()
 
 
-def analyze_user(fb_user:Account):
+def analyze_user(fb_user):
     posts = fb_user.posts
     potentialFakePostsNum = 0
     postsNum = len(posts) # get total posts num  

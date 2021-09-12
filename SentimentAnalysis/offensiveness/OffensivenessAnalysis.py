@@ -1,5 +1,5 @@
 from analyzer.offensiveness import OffensiveWords
-from data_contracts.analysis_result import AnalysisResult
+from modules.AnalysisResult import AnalysisResult
 
 # main func - determines the offensiveness level of user.
 # gets all posts of profile, calculates offensiveness rate of profile, and returns result as text.

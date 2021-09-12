@@ -1,6 +1,6 @@
 from . import Trigers
-from data_contracts.analysis_result import AnalysisResult
-from googletrans import Translator
+from modules.AnalysisResult import AnalysisResult
+
 trigers = Trigers.trigers
 
 def analyze_user(fb_user):
