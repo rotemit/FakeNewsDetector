@@ -25,6 +25,7 @@ year_not_registered = "//*[contains(text(),'Born on ') or contains(text(),'No po
 friendship_duration_xpath = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 pfnyh3mw jifvfom9 gs1a9yip owycx6da btwxx1t3 discj3wi b5q2rw42 lq239pai mysgfdmx hddg9phg']"
 # friendship_duration_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh oo9gr5id hzawbc8m']"
 name_of_page = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t g5gj957u d2edcug0 p01isnhg rj1gh0hx dtpq6qua p8fzw8mz pcp91wgn ihqw7lf3 ipjc6fyt']"
+name_of_group = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t g5gj957u d2edcug0 hpfvmrgz on77hlbc buofh1pr o8rfisnq ph5uu5jm b3onmgus ihqw7lf3 ecm0bbzt']"
 name_of_page_1 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 l1jc4y16 fe6kdd0r mau55g9w c8b282yb rwim8176 mhxlubs3 p5u9llcw hnhda86s oo9gr5id oqcyycmt']"
 name_of_page_2 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 embtmqzv fe6kdd0r mau55g9w c8b282yb hrzyx87i m6dqt4wy h7mekvxk hnhda86s oo9gr5id hzawbc8m']"
 about_group_fields = "//div[@class='dwo3fsh8 g5ia77u1 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv q9uorilb kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso l9j0dhe7 i1ao9s8h k4urcfbm']"
@@ -696,7 +697,7 @@ def scrap_posts(driver, account_url, num):
     url_account: the url of the account we want to get information of - if logged in, also get trust value
     url_page: the url of the page we want to get information of.
     url_group: the url of the group we want to get information of.
-    posts: number of posts we want to extract (now only from account).
+    posts: number of posts we want to extract from the given url(s).
     loging_in: boolean argument if the user wants to log in or not - notice, if decided not to, then some of the info will not be given.
     the next parameters are only used if loging_in=True:
     user_url: the url of the user (its main profile) - only needed to extract trust value from account right now.
@@ -730,15 +731,23 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
 
     if url_page is not None:
         page = scrap_page(driver, url_page)
+        if posts > 0:
+            posts = scrap_posts(driver, url_page, posts)
+            page.set_posts(posts)
         with open('BasicGraphPage.json', 'w', encoding='UTF8') as outfile:
             json.dump(page, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
         print(page)
+        print(analyze_user(page))
 
     if url_group is not None:
         group = scrap_group(driver, url_group)
+        if posts > 0:
+            posts = scrap_posts(driver, url_group, posts)
+            group.set_posts(posts)
         with open('BasicGraphGroup.json', 'w', encoding='UTF8') as outfile:
             json.dump(group, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
         print(group)
+        print(analyze_user(group))
 
     driver.quit()
 
@@ -746,7 +755,9 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
 if __name__ == '__main__':
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
+    scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
 
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")

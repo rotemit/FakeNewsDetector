@@ -1,4 +1,4 @@
-from data_contracts.analysis_result import AnalysisResult
+from modules.AnalysisResult import AnalysisResult
 
 # the output of the analyzer - manager of all the analysis
 # gathers all outputs of all aalysis
