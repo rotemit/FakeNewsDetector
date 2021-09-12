@@ -38,12 +38,13 @@ covid_posts = [
     ['אז לגבי המרכיבים שבזריקות, מסתבר שישנם רכיבים שלא דווחו'],  #vaccine choice il
     ['פנינים שנאמרו בזום המורים. ושימו לב, 25% מבעלי התו הירוק קיבלו פלסיבו'],  #vaccine choice il
     ['קונספירציה חדשה: הבדיקות המהירות שחילקו בבתי הספר הם לא ל covid 19. עבדו עלינו, זה לסארס 2!!!!! אנשים הזויים. יכול להבין שאנשים לא יודעים סתם ככה, אבל מה קשה לעשות גוגל?!'],  #מה כבר יכול לקרות
-    ['Covid-19 מסוכן'],  #rotem
+    ['קורונה מסוכנת וגורמת למוות'],  #rotem
     ['Covid-19 גורמת למוות'],  #rotem
     ['ארגון הבריאות העולמי מכנה רשמית את הקורונה בתור קוביד-19'],  #
     ['תמונה מראה אנשים שנדבקו בקורונה שוכבים על המדרכה בסין'],  #
     ['כשבועיים מאז החל מבצע החיסונים בחיסון השלישי, חצתה היום מדינת ישראל את רף מיליון המתחסנים בחיסון השלישי. מדובר ביותר ממחצית האוכלוסייה ברת החיסון (כ-1.9 מיליון בני 50+, שחלפו חמישה חודשים מאז קיבלו את מנת החיסון השנייה).'],  #
-    # [''],  #
+    ['ההבדלים בין החיסון של מודרנה לבין זה של פייזר קטנים מאד מכל הבחינות. אותה טכנולוגיה ויעילות ובטיחות דומים. לגבי דלקת בשריר הלב - רק אצל הרופא והקרדיולוג.'], #מדברימדע בתגובות
+  #  [' דלקת שריר הלב כתופעת לוואי של החיסון היא נדירה מאוד. לעומת זאת היא נפוצה למדי אצל חולי קורונה. גם אני אגיד שכדאי לשאול את הרופא, אבל אני מאוד אופתע אם הוא לא ימליץ בחום להתחסן. למיטב ידיעתי, המצבים בהם לא מומלץ להתחסן נדירים וקשורים לעניינים של מערכת החיסון ומחלות אוטו-אימוניות, לא ללב.'],  ##מדברימדע בתגובות
     # [''],  #
     # [''],  #
     # [''],  #
@@ -176,15 +177,43 @@ def add_lemmas():
     df['lemmatized_text'] = df.apply(lambda row: get_lemma(row['text']), axis=1)
     df.to_csv('mashrokit_with_lemmas.csv', encoding='utf-8', index=False)
 
+'''
+    Clean text:
+    1. Remove links
+    2. Replace covid-19/coronavirus with 'Corona', as hebrew speakers write 
+'''
+def clean_text(txt):
+    ret = ' '.join(item for item in txt.split() if ((not (item.startswith('https://'))) and (not '.com' in item)))
+    ret = ret.replace('COVID-19', 'Corona')
+    ret = ret.replace('Covid-19', 'Corona')
+    ret = ret.replace('Coronavirus', 'Corona')
+    return ret
+
+'''
+    Given a dataframe with Text column, remove all links from this column
+'''
+def clean_dataset(df):
+    df['clean_text'] = df.apply(lambda row: clean_text(row['Text']), axis=1)
+
+def csv_cleaner(file):
+    df = pd.read_csv(file)
+    df = df.drop_duplicates()
+    clean_dataset(df)
+    new_name = file.rsplit(".", 1)[0] + 'Clean.csv'
+    df.to_csv(new_name, encoding='utf-8', index=False, mode='w+')
+
 if __name__ == '__main__':
     # my_csv_writer()
     # df = pd.read_csv('my_csv_file_lemmatized.csv')
 
+
     # *************** TRYING COVID with the two files ***************
+    # # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
+    # # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
     # print('1')
-    # df_true = pd.read_csv('trueNews.csv')
+    # df_true = pd.read_csv('trueNewsClean.csv')
     # print('2')
-    # df_false = pd.read_csv('fakeNews.csv')
+    # df_false = pd.read_csv('fakeNewsClean.csv')
     # print('3')
     # # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
     # df_true.dropna(inplace=True)
@@ -198,14 +227,17 @@ if __name__ == '__main__':
     #******************************************************
 
     #*********************DATASET: Constraint_Train *********************
-    # df = pd.read_csv('Constraint_Train.csv')
+    # df = pd.read_csv('Constraint_TrainClean.csv')
     # labels = df['label']
     #*********************************************************************
 
     #********************** COMBINED DAASETS **********************************
-    df_true = pd.read_csv('trueNews.csv')
-    df_false = pd.read_csv('fakeNews.csv')
-    df_Constraint = pd.read_csv('Constraint_Train.csv')
+    # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
+    # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
+    # csv_cleaner('Constraint_Train.csv')
+    df_true = pd.read_csv('trueNewsClean.csv')
+    df_false = pd.read_csv('fakeNewsClean.csv')
+    df_Constraint = pd.read_csv('Constraint_TrainClean.csv')
     # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
     df_true.dropna(inplace=True)
     df_false.dropna(inplace=True)
@@ -217,8 +249,14 @@ if __name__ == '__main__':
 
     #***************************************************************************
 
+    #********************************Vaccine Tweets Datasets*******************************
+    # csv_cleaner('vaccination_tweets.csv')
+    # df = pd.read_csv('Constraint_Train.csv')
+    # labels = df['label']
+    #***************************************************************************************
 
-    text_train, text_valid, label_train, label_valid = train_test_split(df['Text'], labels, test_size=0.2,
+
+    text_train, text_valid, label_train, label_valid = train_test_split(df['clean_text'], labels, test_size=0.2,
                                                                         random_state=109)
     tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 1), norm=None)
     tfidf_train = tfidf_vectorizer.fit_transform(text_train)
