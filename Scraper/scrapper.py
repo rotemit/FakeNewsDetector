@@ -697,6 +697,7 @@ def scrap_posts(driver, account_url, num):
     url_account: the url of the account we want to get information of - if logged in, also get trust value
     url_page: the url of the page we want to get information of.
     url_group: the url of the group we want to get information of.
+    only_posts: boolean if we only want the posts of the given url, only works for 1 url, return immediately the posts array.
     posts: number of posts we want to extract from the given url(s).
     loging_in: boolean argument if the user wants to log in or not - notice, if decided not to, then some of the info will not be given.
     the next parameters are only used if loging_in=True:
@@ -704,7 +705,7 @@ def scrap_posts(driver, account_url, num):
     user_mail: the mail the user uses to enter its Facebook account.
     user_password: the password the user uses to enter its Facebook account.
 """
-def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, loging_in=False, user_url=None, user_mail=None, user_password=None):
+def scrap_facebook(url_account=None, url_page=None, url_group=None, onlyPosts=False, posts=0, loging_in=False, user_url=None, user_mail=None, user_password=None):
     driver = init_sel()
     user_summary = {}
 
@@ -717,9 +718,12 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
         user_summary = login(driver, user_url, user_mail, user_password)
 
     if url_account is not None:
-        account = scrap_account(driver, url_account)
+        if not onlyPosts:
+            account = scrap_account(driver, url_account)
         if posts > 0:
             posts = scrap_posts(driver, url_account, posts)
+            if onlyPosts:
+                return posts
             account.set_posts(posts)
         with open('BasicGraphAccount.json', 'w', encoding='UTF8') as outfile:
             json.dump(account, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
@@ -729,23 +733,31 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
             print("trust value of account: " + str(account.account_trust_value))
         print(account)
         print(analyze_user(account))
-        driver.quit() #rotem changes
-        return account  #rotem changes
+        driver.quit()
+        return account
 
     if url_page is not None:
-        page = scrap_page(driver, url_page)
+        if not onlyPosts:
+            page = scrap_page(driver, url_page)
         if posts > 0:
             posts = scrap_posts(driver, url_page, posts)
+            if onlyPosts:
+                return posts
             page.set_posts(posts)
         with open('BasicGraphPage.json', 'w', encoding='UTF8') as outfile:
             json.dump(page, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
         print(page)
         print(analyze_user(page))
+        driver.quit()
+        return page
 
     if url_group is not None:
-        group = scrap_group(driver, url_group)
+        if not onlyPosts:
+            group = scrap_group(driver, url_group)
         if posts > 0:
             posts = scrap_posts(driver, url_group, posts)
+            if onlyPosts:
+                return posts
             group.set_posts(posts)
         with open('BasicGraphGroup.json', 'w', encoding='UTF8') as outfile:
             json.dump(group, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
