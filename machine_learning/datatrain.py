@@ -14,17 +14,7 @@ from sklearn import metrics
 from sklearn.feature_extraction.text import HashingVectorizer
 
 from deep_translator import GoogleTranslator #pip installed
-
-
-#manual data for testing
-data = [
-    # ['1', 'ילדים חכמים אוהבים שוקולד'],
-    # ['2', 'ילדים חכמים אוהבים ילדים חכמים'],
-    # ['1', 'ילדות חכמות אוהבות שוקולד'],
-    # ['1', 'ילדים חכמים אוהבים לחקור שוקולד'],
-    # ['2', 'ילדות חכמות אוהבות רצים מהר'],
-    # ['1', 'ילדות אוהבות רצים']
-]
+from heb_data_collector import get_group_posts
 
 
 '''
@@ -44,8 +34,7 @@ covid_posts = [
     ['תמונה מראה אנשים שנדבקו בקורונה שוכבים על המדרכה בסין'],  #
     ['כשבועיים מאז החל מבצע החיסונים בחיסון השלישי, חצתה היום מדינת ישראל את רף מיליון המתחסנים בחיסון השלישי. מדובר ביותר ממחצית האוכלוסייה ברת החיסון (כ-1.9 מיליון בני 50+, שחלפו חמישה חודשים מאז קיבלו את מנת החיסון השנייה).'],  #
     ['ההבדלים בין החיסון של מודרנה לבין זה של פייזר קטנים מאד מכל הבחינות. אותה טכנולוגיה ויעילות ובטיחות דומים. לגבי דלקת בשריר הלב - רק אצל הרופא והקרדיולוג.'], #מדברימדע בתגובות
-  #  [' דלקת שריר הלב כתופעת לוואי של החיסון היא נדירה מאוד. לעומת זאת היא נפוצה למדי אצל חולי קורונה. גם אני אגיד שכדאי לשאול את הרופא, אבל אני מאוד אופתע אם הוא לא ימליץ בחום להתחסן. למיטב ידיעתי, המצבים בהם לא מומלץ להתחסן נדירים וקשורים לעניינים של מערכת החיסון ומחלות אוטו-אימוניות, לא ללב.'],  ##מדברימדע בתגובות
-    # [''],  #
+    ["מחקר אמריקאי חושף: תינוקות וילדי 'דור הקורונה' נפגעים בגלל הסגרים, הבידוד וגם בשל מצוקות הוריהם, מתקשים בדיבור, בהבנה ובביצוע פעולות מוטוריות. ('ידיעות')"],  #מדברים קורונה
     # [''],  #
     # [''],  #
     # [''],  #
@@ -55,38 +44,11 @@ covid_posts = [
     manual tests for svm
 '''
 def our_svm_tests(tfidf_vectorizer, svm_classifier):
-    for post in covid_posts:
-        en_post = GoogleTranslator(source='he', target='en').translate(post[0])
+    posts = get_group_posts()
+    for post in posts:
+        en_post = GoogleTranslator(source='he', target='en').translate(post)
         grade = grade_post(en_post, tfidf_vectorizer, svm_classifier)
         print('Post: '+en_post+'\nGrade: '+str(grade)+'\n')
-
-
-def our_manual_tests():
-    # testing with posts from the shadow. the two last ones are about the olympics, not correlating with our training set but with interesting results
-    post = readify_text(
-        "זה מה שמצאו מתפללים בשני בתי כנסת אתמול  בבני ברק. לבית הכנסת נזרקו גם קונדומים תמונות פורנגרפיות ותמונות של שירה בנקי זל שנרצחה במצעד הגאווה. אין מה להגיד יש הרגשה של ריפוי באויר.")
-    print("psot: " + post)
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
-    post = readify_text(
-        "פיטר פלצ'יק לאחר הזכיה אתמול במדלית ארד  באולימפיאדה היום נלחמתי לא רק בשביל עצמי ולא רק בשביל המטרות שלי והחלומות שלי, אני נלחמתי  בשביל הקבוצה, בשביל הלב שלנו, המדינה שלנו, בשביל הדגל הזה, ואני לא הולך להוריד אותו בשעות הקרובות והוא יהיה השמיכה שלי היום בלילה.")
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
-    post = readify_text(
-        "התקווה הושמעה בטוקיו!!! תנו המון כבוד לארטיום דולגופיאט שזכה במדליית הזהב בתרגיל הקרקע באולימפיאדת טוקיו 2020. זהו ההישג הגדול ביותר לספורט הישראלי בכל הזמנים: מדליית זהב אולימפית ראשונה לישראל מאז אתונה 2004, והראשונה אי פעם באחד מענפי החשובים ביותר של המשחקים.")
-    print(post)
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
-    # testing with a political post by miri regev
-    post = readify_text(
-        "דמיינו, שאתם הייתה השכנים של גדעון סער והיה לכם סכסוך נגיד על חנייה. יום למחרת גדעון סער כשר המשפטים היה מעביר חוק שפוגע בדיוק בכם באותו סכסוך על חנייה. גדעון סער מונע ממסע נקמה אישי נגד בנימין נתניהו, יש כאן ניגוד עניינים ברור והוא לא יכול להתעסק בשום הצעת חוק הקשורה לנתניהו. ")
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print("Miri Regev's post grade: " + str(grade))
-    # merav michaeli post
-    post = readify_text(
-        "הבריאות שלנו היא מעל הכל. סיכמתי עם ראש הממשלה נפתלי בנט - Naftali Bennett ועם משרד האוצר על גיוס של 400 פקחים אשר יאכפו את עטיית המסיכות בתחבורה הציבורית כדי למנוע הדבקה. המלחמה בקורונה היא לטובת כולנו - אל תזלזלו והקפידו על עטיית מסיכה. ")
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
 
 """
     Given a post, a _ , and a classifier,
@@ -147,17 +109,17 @@ def our_svm(tfidf_train, label_train, tfidf_valid, label_valid):
 '''
 my custom csv file for understanding whats going on
 '''
-
-def my_csv_writer():
-    header = ['label', 'text']
-    with open('my_csv_file.csv', 'w', encoding='UTF8', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(data)
-    df = pd.read_csv('my_csv_file.csv')
-    df = df.drop_duplicates()
-    df['lemmatized_text'] = df.apply(lambda row: get_lemma(row['text']), axis=1)
-    df.to_csv('my_csv_file_lemmatized.csv', encoding='utf-8', index=False)
+#
+# def my_csv_writer():
+#     header = ['label', 'text']
+#     with open('my_csv_file.csv', 'w', encoding='UTF8', newline='') as f:
+#         writer = csv.writer(f)
+#         writer.writerow(header)
+#         writer.writerows(data)
+#     df = pd.read_csv('my_csv_file.csv')
+#     df = df.drop_duplicates()
+#     df['lemmatized_text'] = df.apply(lambda row: get_lemma(row['text']), axis=1)
+#     df.to_csv('my_csv_file_lemmatized.csv', encoding='utf-8', index=False)
 
 # def my_csv_modifier():
 #     with open('Constraint_Train.csv', 'a') as f:
@@ -235,15 +197,22 @@ if __name__ == '__main__':
     # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
     # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
     # csv_cleaner('Constraint_Train.csv')
+    # csv_cleaner('Constraint_Val.csv')
+    # csv_cleaner('english_test_with_labels.csv')
     df_true = pd.read_csv('trueNewsClean.csv')
     df_false = pd.read_csv('fakeNewsClean.csv')
     df_Constraint = pd.read_csv('Constraint_TrainClean.csv')
+    df_ConstraintVal = pd.read_csv('Constraint_ValClean.csv')
+    df_en_test = pd.read_csv('english_test_with_labelsClean.csv')
     # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
     df_true.dropna(inplace=True)
     df_false.dropna(inplace=True)
     df_Constraint.dropna(inplace=True)
-    frames = [df_true, df_false, df_Constraint]
+    df_ConstraintVal.dropna(inplace=True)
+    df_en_test.dropna(inplace=True)
+    frames = [df_true, df_false, df_Constraint, df_ConstraintVal, df_en_test]
     df = pd.concat(frames, join='inner')
+    df.drop_duplicates()
 
     labels = df['Binary Label']
 

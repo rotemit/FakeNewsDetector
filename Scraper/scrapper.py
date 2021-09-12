@@ -601,7 +601,7 @@ def scrap_page(driver, page_url):
     return Page(page_name, page_age, attributes, followers, likes, mutual_friends)
 
 """
-    this method gather all the information of a given group.
+    this method gathers all the information of a given group.
 """
 def scrap_group(driver, group_url):
 
@@ -723,11 +723,14 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
             account.set_posts(posts)
         with open('BasicGraphAccount.json', 'w', encoding='UTF8') as outfile:
             json.dump(account, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
-        account.set_trust_value(Threshold.AccountThreshold("", user_summary, 23.82, 244.34, 17.12, 37))
-        print(account)
-        print("trust value of account: " + str(account.account_trust_value))
-        print(analyze_user(account))
 
+        if user_summary is not None:
+            account.set_trust_value(Threshold.AccountThreshold("", user_summary, 23.82, 244.34, 17.12, 37))
+            print("trust value of account: " + str(account.account_trust_value))
+        print(account)
+        print(analyze_user(account))
+        driver.quit() #rotem changes
+        return account  #rotem changes
 
     if url_page is not None:
         page = scrap_page(driver, url_page)
@@ -748,6 +751,8 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, posts=0, log
             json.dump(group, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
         print(group)
         print(analyze_user(group))
+        driver.quit()
+        return group
 
     driver.quit()
 
