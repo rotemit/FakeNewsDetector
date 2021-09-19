@@ -19,14 +19,17 @@ from heb_data_collector import get_group_posts
 
 
 def grade_single_post(post):
-    return -1
-    # svm_model = joblib.load('combined_trained_model.joblib')
-    # tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 1), norm=None)
-    # tfidf_train = tfidf_vectorizer.fit_transform(text_train)
-    # tfidf_valid = tfidf_vectorizer.transform(text_valid)
-    # tfidf_test = tfidf_vectorizer.transform([post])
-    # y_pred = svm_model.predict(tfidf_test)
-    # print(y_pred)
+    #load trained model and fitted vectorizer
+    svm_model = joblib.load('combined_trained_model.pkl')
+    vectorizer = joblib.load('tfidf_vectorizer.pkl')
+    #translate post to english, regardless of source language
+    translator = GoogleTranslator()
+    translated_post = translator.translate(post)
+    #vectorize and predict fakeness
+    vectorized_post = vectorizer.transform([translated_post])
+    y_pred = svm_model.predict(vectorized_post)
+    #print result
+    print("post:\n"+ post + "\ntranslated post:\n" + translated_post + "\ngrade: " + str(y_pred))
 
 '''
     manual tests for svm
@@ -78,36 +81,39 @@ def readify_text(txt):
     return txt
 
 '''
-    Given readied data for training and validation, either:
-        1. Perform training, evaluate model on validation set, print confusion matrix,
-           and save trained model in file 'joblib_filename'
-        OR
-        2. Load and return trained model from file 'joblib_filename'
-'''
-def our_svm(tfidf_train, label_train, tfidf_valid, label_valid, joblib_filename):
-    #*************TRAIN AND SAVE*************
-    # # create a svm classifier
-    # svm_model = svm.SVC(kernel='linear')
-    #
-    # #train
-    # svm_model.fit(tfidf_train, label_train)
-    #
-    # #predict the labels for the text validation data
-    # label_prediction = svm_model.predict(tfidf_valid)
-    #
-    # #check model accuracy
-    # print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
-    # print(confusion_matrix(label_valid, label_prediction))
-    #
-    # #save trained model
-    # joblib.dump(svm_model, joblib_filename)
-    #**************FINISH TRAIN AND SAVE*********
+    Given readied data for training and validation, do:
+        Perform training, evaluate model on validation set, print confusion matrix,
+        and save trained model in file 'joblib_filename'
 
-    #when using a pre-trained model, comment previous code and uncomment next line
-    svm_model = joblib.load(joblib_filename)
+'''
+def our_svm(tfidf_train, label_train, tfidf_valid, label_valid, model_filename, vectorizer, vectorizer_filename):
+    # create a svm classifier
+    svm_model = svm.SVC(kernel='linear')
+
+    #train
+    svm_model.fit(tfidf_train, label_train)
+
+    #predict the labels for the text validation data
+    label_prediction = svm_model.predict(tfidf_valid)
+
+    #check model accuracy
+    print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
+    print(confusion_matrix(label_valid, label_prediction))
+
+    #save trained model
+    joblib.dump(svm_model, model_filename)
+
+    #save vectorizer
+    joblib.dump(vectorizer, vectorizer_filename)
+
     print('finishing svm')
     return svm_model
 
+'''
+    Load and return trained model from file 'filename'
+'''
+def load_trained_svm_model(filename):
+    return joblib.load(filename)
 
 '''
     Clean text:
@@ -135,30 +141,6 @@ def csv_cleaner(file):
     df.to_csv(new_name, encoding='utf-8', index=False, mode='w+')
 
 if __name__ == '__main__':
-    # *************** TRYING COVID with the two files ***************
-    # # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
-    # # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
-    # print('1')
-    # df_true = pd.read_csv('trueNewsClean.csv')
-    # print('2')
-    # df_false = pd.read_csv('fakeNewsClean.csv')
-    # print('3')
-    # # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
-    # df_true.dropna(inplace=True)
-    # print('4')
-    # df_false.dropna(inplace=True)
-    # print('5')
-    # frames = [df_true, df_false]
-    # df = pd.concat(frames, join='inner')
-    #
-    # labels = df['Binary Label']
-    #******************************************************
-
-    #*********************DATASET: Constraint_Train *********************
-    # df = pd.read_csv('Constraint_TrainClean.csv')
-    # labels = df['label']
-    #*********************************************************************
-
     #********************** COMBINED DAASETS **********************************
     # # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
     # # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
@@ -184,23 +166,27 @@ if __name__ == '__main__':
 
     #***************************************************************************
 
-
+    #
     # text_train, text_valid, label_train, label_valid = train_test_split(df['clean_text'], labels, test_size=0.2,
     #                                                                     random_state=109)
-    # tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 1), norm=None)
+    # tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 2), norm=None)
     # tfidf_train = tfidf_vectorizer.fit_transform(text_train)
     # tfidf_valid = tfidf_vectorizer.transform(text_valid)
-    # svm_classifier = our_svm(tfidf_train, label_train, tfidf_valid, label_valid, 'combined_trained_model.joblib')
+    # svm_classifier = our_svm(tfidf_train, label_train, tfidf_valid, label_valid, 'combined_trained_model.pkl', tfidf_vectorizer, 'tfidf_vectorizer.pkl')
     #
     # our_svm_tests(tfidf_vectorizer, svm_classifier)
 
 
 
     # *************** FINISH **********************
+    # load_trained_svm_model('combined_trained_model.pkl')
     grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "')
     grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
     grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה")
-
+    grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה")
+    grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)")
+    grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak")
+    grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.")
 
 
 
