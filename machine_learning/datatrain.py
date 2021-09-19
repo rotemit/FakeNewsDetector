@@ -17,7 +17,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from deep_translator import GoogleTranslator #pip installed
 from heb_data_collector import get_group_posts
 
-
+#bla
 def grade_single_post(post):
     #load trained model and fitted vectorizer
     svm_model = joblib.load('combined_trained_model.pkl')
