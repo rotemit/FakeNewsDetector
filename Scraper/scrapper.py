@@ -10,10 +10,12 @@ from modules.Account import account_encoder
 from modules.Page import Page
 from modules.Group import Group
 from modules.Account import Account
+from modules.Post import Post
 from modules import Threshold
 import time
 from datetime import date
 from SentimentAnalysis.analyzer.PotentialFakeNewsAnalysis import analyze_user
+from SentimentAnalysis.analyzer.PotentialFakeNewsAnalysis import ananlyze_post
 
 import json
 
@@ -376,6 +378,17 @@ def int_from_human_format(x):
     return 1000000000
 
 
+def days_from_human_format(x):
+    if 'd' in x:
+        return int(x.replace('d', ''))
+    if 'w' in x:
+        return int(x.replace('w', '')) * 7
+    if 'm' in x:
+        return int(x.replace('m', '')) * 30
+    if 'y' in x:
+        return int(x.replace('y', '')) * 356
+    return x
+
 """
     This method extract the number of followers, number of likes
     and number of the user's friends that liked the page the driver is in.
@@ -639,30 +652,39 @@ def scrap_group(driver, group_url):
     arr - the array we want to enter the posts to
     this method only gets the actual text of the post and not the other parameters.
 """
-def scroll_over_posts(driver, elements_xpath, num, arr):
+def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, num, arr):
     # using the method of "send_keys" to type the END key to get to the end of the page.
     counter = 0
     index = len(arr)
     actions = ActionChains(driver)
 
-    elements = driver.find_elements_by_xpath(elements_xpath)
-    old_elements_amount = len(elements)
+    # elements = driver.find_elements_by_xpath(elements_xpath)
+    text_elements = driver.find_elements_by_xpath(elements_xpath_text)
+    background_elements = driver.find_elements_by_xpath(elements_xpath_background)
+    old_elements_amount = len(text_elements) + len(background_elements)
 
     while counter < num:
         time.sleep(2)
         actions.send_keys(Keys.END)
         actions.perform()
 
-        elements = driver.find_elements_by_xpath(elements_xpath)
-        for post in elements:
+        text_elements = driver.find_elements_by_xpath(elements_xpath_text)
+        background_elements = driver.find_elements_by_xpath(elements_xpath_background)
+
+        for post in text_elements:
             # if there is actual text in the post
             if post.text != "":
                 # if the post is longer than usual, then there is the button of "see more"
                 # we click it to get the full text of the post.
                 if "See More" in post.text:
                     try:
-                        more = post.find_element_by_xpath("//div[text()='See More']")
-                        webdriver.ActionChains(driver).move_to_element(more).click(more).perform()
+                        print("more?")
+                        more = redirect_by_xpath("//div[text()='See More']")
+                        print("more...")
+                        # more[0].click()
+                        # more = post.find_element_by_xpath("//div[text()='See More']")
+                        webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
+                        print("more!")
                     except:
                         pass
                 # replacing all new-lines in post to spaces
@@ -673,10 +695,32 @@ def scroll_over_posts(driver, elements_xpath, num, arr):
                     index += 1
                     counter += 1
 
-        if len(elements) == old_elements_amount:
-            break
-        old_elements_amount = len(elements)
+        for post in background_elements:
+            # if the post is longer than usual, then there is the button of "see more"
+            # we click it to get the full text of the post.
+            if "See More" in post.text:
+                try:
+                    print("more?")
+                    more = redirect_by_xpath("//div[text()='See More']")
+                    print("more...")
+                    # more[0].click()
+                    # more = post.find_element_by_xpath("//div[text()='See More']")
+                    webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
+                    print("more!")
+                except:
+                    pass
+            # replacing all new-lines in post to spaces
+            # and inserting the post to the given array if not already there
+            text = post.text.replace('\n', ' ')
+            if text not in arr and text != '':
+                arr.insert(index, text)
+                index += 1
+                counter += 1
 
+        if len(text_elements) + len(background_elements) == old_elements_amount:
+            break
+        old_elements_amount = len(text_elements) + len(background_elements)
+    return arr
 
 """
     this method extract from given account its posts by calling to scroll_over_posts function
@@ -687,8 +731,95 @@ def scrap_posts(driver, account_url, num):
     time.sleep(2)
     arr = []
     while len(arr) < num:
-        scroll_over_posts(driver, "//div[@class='kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q']", num, arr)
+
+        arr = scroll_over_posts(driver, "//div[@class='kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q']", "//div[@class='sfj4j7ms pvbba8z0 rqr5e5pd dy7m38rt j7igg4fr']", num, arr)
+        # arr = scroll_over_posts(driver, "//div[@class='sfj4j7ms pvbba8z0 rqr5e5pd dy7m38rt j7igg4fr']", num, arr,"Background")
+        # scroll_over_posts(driver, "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v b1v8xokw oo9gr5id hzawbc8m']", num, arr)
+        # scroll_over_posts(driver, "//div[@class='rq0escxv l9j0dhe7 du4w35lb hybvsw6c io0zqebd m5lcvass fbipl8qg nwvqtn77 k4urcfbm ni8dbmo4 stjgntxs sbcfpzgs']", "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v b1v8xokw oo9gr5id hzawbc8m']", num, arr)
+
     return arr
+
+def scrap_comments(driver):
+    comments = []
+    post_comments = driver.find_elements_by_xpath("//div[@class='cwj9ozl2 tvmbv18p']/ul/li")
+    arr_index = 0
+
+    for i, comm in enumerate(post_comments):
+        lines = comm.text.split('\n')
+        writer = lines[0]
+        text = lines[1]
+        likes = 0
+        age = 0
+        start_text = 1
+
+        for j, line in enumerate(lines):
+            if "Like" in line:
+                try:
+                    likes = int(lines[j-1])
+                    text = ' '.join(lines[start_text:j-1])
+                except:
+                    likes = 0
+                    text = ' '.join(lines[start_text:j])
+            if "Share" in line or "Reply" in line:
+                age_arr = line.split(' ')
+                age = days_from_human_format(age_arr[4])
+                if text == "":
+                    text = None
+                comments.insert(arr_index, {"Writer": writer, "Text": text, "Likes": likes, "Age": age})
+                arr_index += 1
+                if(len(lines) > j+1):
+                    writer = lines[j+1]
+                    start_text = j+2
+
+    return comments
+
+def click_on_all(driver, element_xpath):
+    elements = driver.find_elements_by_xpath(element_xpath)
+    print(len(elements))
+    for elem in elements:
+        try:
+            elem.click()
+        except:
+            webdriver.ActionChains(driver).move_to_element(elem).click(elem).perform()
+        time.sleep(1)
+    return len(elements)
+
+
+def scrap_one_post(driver, post_url):
+    driver.get(post_url)
+    time.sleep(2)
+
+    sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
+    click_on_all(driver, "//div[text()='See More']")
+    while sum != 0:
+        sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
+        click_on_all(driver, "//div[text()='See More']")
+
+    post_writer = driver.find_elements_by_xpath("//h2[@class='gmql0nx0 l94mrbxd p1ri9a11 lzcic4wl aahdfvyu hzawbc8m']")
+    if len(post_writer) == 1:
+        writer = post_writer[0].text
+    else:
+        writer = None
+
+    post_content = driver.find_elements_by_xpath("//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v b1v8xokw oo9gr5id hzawbc8m']")
+    if len(post_content) > 0:
+        content = post_content[len(post_content)-1].text.replace("\n", " ")
+    else:
+        content = None
+
+    if content == "" or content is None:
+        post_content = driver.find_elements_by_xpath("//div[@class='sfj4j7ms pvbba8z0 rqr5e5pd dy7m38rt j7igg4fr']")
+        if len(post_content) > 0:
+            content = post_content[len(post_content) - 1].text.replace("\n", " ")
+        else:
+            content = None
+
+    if content == "":
+        content = None
+
+    comments = scrap_comments(driver)
+
+    return Post(writer, content, comments)
 
 
 """
@@ -697,7 +828,8 @@ def scrap_posts(driver, account_url, num):
     url_account: the url of the account we want to get information of - if logged in, also get trust value
     url_page: the url of the page we want to get information of.
     url_group: the url of the group we want to get information of.
-    only_posts: boolean if we only want the posts of the given url, only works for 1 url, return immediately the posts array.
+    url_post: the url of a uniq post, gets it's writer's name, content, and it's comments
+    onlyPosts: boolean if we only want the posts of the given url, only works for one url, return immediately the posts array.
     posts: number of posts we want to extract from the given url(s).
     loging_in: boolean argument if the user wants to log in or not - notice, if decided not to, then some of the info will not be given.
     the next parameters are only used if loging_in=True:
@@ -705,7 +837,7 @@ def scrap_posts(driver, account_url, num):
     user_mail: the mail the user uses to enter its Facebook account.
     user_password: the password the user uses to enter its Facebook account.
 """
-def scrap_facebook(url_account=None, url_page=None, url_group=None, onlyPosts=False, posts=0, loging_in=False, user_url=None, user_mail=None, user_password=None):
+def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=None, onlyPosts=False, posts=0, loging_in=False, user_url=None, user_mail=None, user_password=None):
     driver = init_sel()
     user_summary = {}
 
@@ -716,6 +848,16 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, onlyPosts=Fa
 
     if loging_in:
         user_summary = login(driver, user_url, user_mail, user_password)
+
+    if url_post is not None:
+        post = scrap_one_post(driver, url_post)
+        # print(post)
+        with open('BasicGraphPost.json', 'w', encoding='UTF8') as outfile:
+            json.dump(post, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
+        print(ananlyze_post(post))
+        driver.quit()
+        return post
+
 
     if url_account is not None:
         if not onlyPosts:
@@ -773,8 +915,11 @@ if __name__ == '__main__':
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
-    scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # posts = scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=20, onlyPosts=True, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # scrap_facebook(url_post="https://www.facebook.com/groups/336084457286212/permalink/648330709394917",  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    scrap_facebook(url_post="https://www.facebook.com/yoram.morim/posts/10158760492028533",  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # print(posts)
 
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")

@@ -6,6 +6,29 @@ from deep_translator import GoogleTranslator
 # nltk.download('vader_lexicon')
 sid = SentimentIntensityAnalyzer()
 
+def ananlyze_post(post):
+    potentialFakePostsNum = 0
+    if post.content is not None:
+        potentialFakePostsNum = check_fake_potential(post.content)
+    potentialFakeCommentsNum = 0
+    commentsNum = len(post.comments)
+    if commentsNum == 0:
+        return
+    for comm in post.comments:
+        if comm['Text'] is not None:
+            if check_fake_potential(comm['Text']):
+                potentialFakeCommentsNum += 1
+
+    # calculate rate
+    potentialFakeRate = potentialFakeCommentsNum / commentsNum
+
+    # convert to analysis result
+    percent = int((potentialFakeRate * 100) // 1)
+    percentResult = str(percent) + "%"
+    textResult = convert_potential_fake_rate_to_text(potentialFakeRate)
+    print("post fake: " + str(potentialFakePostsNum))
+    return AnalysisResult(percentResult, textResult, potentialFakeRate)
+
 
 def analyze_user(fb_user):
     posts = fb_user.posts
