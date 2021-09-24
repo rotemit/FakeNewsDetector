@@ -9,6 +9,7 @@ import './EnterProfile.css'
 export const EnterProfile = () => {
   const [name, setName] = useState('');
   const [posts, setPost] = useState([]);
+  const [isDone, setIsDone] = useState([false]);
   // let counter = 1;
 
   // useEffect(() => {
@@ -18,16 +19,19 @@ export const EnterProfile = () => {
   // }, []);
 
   useEffect(() => {
+    if (isDone) {
+      fetch('/profile').then(response =>  
+        response.json().then(data => {
+        setPost(data.name);
+        setIsDone(false);
+        console.log(data.name);
+      })
+      )
+    }
     
-    fetch('/profile').then(response =>  
-      response.json().then(data => {
-      setPost(data.name);
-      console.log(data.name);
-    })
-    )
     
     //  setPost(response);
-  }, []);
+  });
 
   
 
@@ -50,9 +54,11 @@ export const EnterProfile = () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(name)
+        }).then (res => {
+          setIsDone(res)
         });
         if (response.ok) {
-
+          // setIsDone(true)
           console.log('response worked!');
         }
       }}>

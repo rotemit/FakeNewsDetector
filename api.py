@@ -15,7 +15,7 @@ app = Flask(__name__)
 CORS(app)
 
 def get_posts(name):
-    post = "data from server " + name
+    # post = "data from server " + name
     file = open('file.csv', 'w', encoding='UTF8')
     writer = csv.writer(file)
     writer.writerow(['post_id', 'post_text', 'date', 'writer', 'label'])
@@ -27,7 +27,7 @@ def get_posts(name):
     # writer.writerow(['1', name, 'date', 'writer', 'label'])
     file.close()
     print("done")
-    return post
+    return True
 
 
 # Decorator defines a route
@@ -50,6 +50,17 @@ def send_data_to_react():
     return {
         'name': posts
     }
+@app.route('/scanPost', methods=['POST'])
+def get_post():
+    data = request.get_json()
+    # get_posts(data)
+    print(data)
+    return get_posts(data)
+
+@app.route('/scanPost', methods=['GET'])
+def send_post_result():
+    return "1"
+
 
 if __name__ == '__main__':
     app.run(debug=True)

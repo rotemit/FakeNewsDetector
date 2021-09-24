@@ -6,7 +6,7 @@ function Feature(porps) {
     const history = useHistory();
 
   function handleClick() {
-    history.push('/EnterProfile')
+    history.push('/ScanPost')
   }
     return (
       <div>
