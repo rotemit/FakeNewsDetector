@@ -1,3 +1,5 @@
+import csv
+#testtt
 import numpy as np
 import pandas as pd
 import itertools
@@ -5,42 +7,43 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
-from googletrans import Translator
 import stop_words
+from yap_server import get_lemma
 from sklearn import svm
 from sklearn import metrics
+import joblib
 from sklearn.feature_extraction.text import HashingVectorizer
 
-def our_manual_tests():
-    # testing with posts from the shadow. the two last ones are about the olympics, not correlating with our training set but with interesting results
-    post = readify_text(
-        "זה מה שמצאו מתפללים בשני בתי כנסת אתמול  בבני ברק. לבית הכנסת נזרקו גם קונדומים תמונות פורנגרפיות ותמונות של שירה בנקי זל שנרצחה במצעד הגאווה. אין מה להגיד יש הרגשה של ריפוי באויר.")
-    print("psot: " + post)
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
-    post = readify_text(
-        "פיטר פלצ'יק לאחר הזכיה אתמול במדלית ארד  באולימפיאדה היום נלחמתי לא רק בשביל עצמי ולא רק בשביל המטרות שלי והחלומות שלי, אני נלחמתי  בשביל הקבוצה, בשביל הלב שלנו, המדינה שלנו, בשביל הדגל הזה, ואני לא הולך להוריד אותו בשעות הקרובות והוא יהיה השמיכה שלי היום בלילה.")
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
-    post = readify_text(
-        "התקווה הושמעה בטוקיו!!! תנו המון כבוד לארטיום דולגופיאט שזכה במדליית הזהב בתרגיל הקרקע באולימפיאדת טוקיו 2020. זהו ההישג הגדול ביותר לספורט הישראלי בכל הזמנים: מדליית זהב אולימפית ראשונה לישראל מאז אתונה 2004, והראשונה אי פעם באחד מענפי החשובים ביותר של המשחקים.")
-    print(post)
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
-    # testing with a political post by miri regev
-    post = readify_text(
-        "דמיינו, שאתם הייתה השכנים של גדעון סער והיה לכם סכסוך נגיד על חנייה. יום למחרת גדעון סער כשר המשפטים היה מעביר חוק שפוגע בדיוק בכם באותו סכסוך על חנייה. גדעון סער מונע ממסע נקמה אישי נגד בנימין נתניהו, יש כאן ניגוד עניינים ברור והוא לא יכול להתעסק בשום הצעת חוק הקשורה לנתניהו. ")
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print("Miri Regev's post grade: " + str(grade))
-    # merav michaeli post
-    post = readify_text(
-        "הבריאות שלנו היא מעל הכל. סיכמתי עם ראש הממשלה נפתלי בנט - Naftali Bennett ועם משרד האוצר על גיוס של 400 פקחים אשר יאכפו את עטיית המסיכות בתחבורה הציבורית כדי למנוע הדבקה. המלחמה בקורונה היא לטובת כולנו - אל תזלזלו והקפידו על עטיית מסיכה. ")
-    grade = grade_post(post, tfidf_vectorizer, pac)
-    print(grade)
+from deep_translator import GoogleTranslator #pip installed
+from heb_data_collector import get_group_posts
+
+#bla
+def grade_single_post(post):
+    #load trained model and fitted vectorizer
+    svm_model = joblib.load('combined_trained_model.pkl')
+    vectorizer = joblib.load('tfidf_vectorizer.pkl')
+    #translate post to english, regardless of source language
+    translator = GoogleTranslator()
+    translated_post = translator.translate(post)
+    #vectorize and predict fakeness
+    vectorized_post = vectorizer.transform([translated_post])
+    y_pred = svm_model.predict(vectorized_post)
+    #print result
+    print("post:\n"+ post + "\ntranslated post:\n" + translated_post + "\ngrade: " + str(y_pred))
+
+'''
+    manual tests for svm
+'''
+def our_svm_tests(tfidf_vectorizer, svm_classifier):
+    posts = pd.read_csv('heb_posts.csv')
+    for post in posts:
+        en_post = GoogleTranslator(source='he', target='en').translate(post)
+        grade = grade_post(en_post, tfidf_vectorizer, svm_classifier)
+        print('Post: '+en_post+'\nGrade: '+str(grade)+'\n')
 
 """
     Given a post, a _ , and a classifier,
-    return a grade between 0-5 indicating the level of fake
+    return a binary grade indicating the level of fake
 """
 def grade_post (post, machine, classifer):
     tfidf_test = machine.transform([post])
@@ -74,68 +77,116 @@ def remove_stopwords(txt):
 def readify_text(txt):
     txt = clean_txt(txt)
     txt = remove_stopwords(txt)
+    #TODO stem? https://towardsdatascience.com/getting-your-text-data-ready-for-your-natural-language-processing-journey-744d52912867
     return txt
 
-def our_svm(tfidf_train, label_train, tfidf_valid, label_valid):
+'''
+    Given readied data for training and validation, do:
+        Perform training, evaluate model on validation set, print confusion matrix,
+        and save trained model in file 'joblib_filename'
+
+'''
+def our_svm(tfidf_train, label_train, tfidf_valid, label_valid, model_filename, vectorizer, vectorizer_filename):
     # create a svm classifier
-    svm_clf = svm.SVC(kernel='linear')
+    svm_model = svm.SVC(kernel='linear')
 
     #train
-    svm_clf.fit(tfidf_train, label_train)
+    svm_model.fit(tfidf_train, label_train)
 
     #predict the labels for the text validation data
-    label_prediction = svm_clf.predict(tfidf_valid)
+    label_prediction = svm_model.predict(tfidf_valid)
 
     #check model accuracy
     print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
-
     print(confusion_matrix(label_valid, label_prediction))
 
-if __name__ == '__main__':
-    # Read the data
-    df = pd.read_csv('mashrokit.csv')
-    # df = list(dict.fromkeys(df))
+    #save trained model
+    joblib.dump(svm_model, model_filename)
+
+    #save vectorizer
+    joblib.dump(vectorizer, vectorizer_filename)
+
+    print('finishing svm')
+    return svm_model
+
+'''
+    Load and return trained model from file 'filename'
+'''
+def load_trained_svm_model(filename):
+    return joblib.load(filename)
+
+'''
+    Clean text:
+    1. Remove links
+    2. Replace covid-19/coronavirus with 'Corona', as hebrew speakers write 
+'''
+def clean_text(txt):
+    ret = ' '.join(item for item in txt.split() if ((not (item.startswith('https://'))) and (not '.com' in item)))
+    ret = ret.replace('COVID-19', 'Corona')
+    ret = ret.replace('Covid-19', 'Corona')
+    ret = ret.replace('Coronavirus', 'Corona')
+    return ret
+
+'''
+    Given a dataframe with Text column, remove all links from this column
+'''
+def clean_dataset(df):
+    df['clean_text'] = df.apply(lambda row: clean_text(row['Text']), axis=1)
+
+def csv_cleaner(file):
+    df = pd.read_csv(file)
     df = df.drop_duplicates()
-    print(df.shape)
-    # # Get shape and head
-    # print(df.shape)
-    # print(df.head(5))
-    # # DataFlair - Get the labels
-    labels = df.label
-    # print(labels.head(5))
-    # validation
-    text_train, text_valid, label_train, label_valid = train_test_split(df['text'], labels, test_size=0.2, random_state=109)
-    # print(label_train.count)
-    #readify texts
-    # text_train = [(index, readify_text(sentence)) for (index, sentence) in text_train]
-    # print(text_train.shape)
-    # text_valid = [(index, readify_text(sentence)) for index, sentence in text_valid]
-    #create vectorizer to work with numbers instead of text
-    # tfidf_vectorizer = TfidfVectorizer(stop_words=stop_words.stop_words, strip_accents='unicode', ngram_range=(2, 5))
+    clean_dataset(df)
+    new_name = file.rsplit(".", 1)[0] + 'Clean.csv'
+    df.to_csv(new_name, encoding='utf-8', index=False, mode='w+')
+
+if __name__ == '__main__':
+    #********************** COMBINED DAASETS **********************************
+    # # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
+    # # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
+    # # csv_cleaner('Constraint_Train.csv')
+    # # csv_cleaner('Constraint_Val.csv')
+    # # csv_cleaner('english_test_with_labels.csv')
+    # df_true = pd.read_csv('trueNewsClean.csv')
+    # df_false = pd.read_csv('fakeNewsClean.csv')
+    # df_Constraint = pd.read_csv('Constraint_TrainClean.csv')
+    # df_ConstraintVal = pd.read_csv('Constraint_ValClean.csv')
+    # df_en_test = pd.read_csv('english_test_with_labelsClean.csv')
+    # # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
+    # df_true.dropna(inplace=True)
+    # df_false.dropna(inplace=True)
+    # df_Constraint.dropna(inplace=True)
+    # df_ConstraintVal.dropna(inplace=True)
+    # df_en_test.dropna(inplace=True)
+    # frames = [df_true, df_false, df_Constraint, df_ConstraintVal, df_en_test]
+    # df = pd.concat(frames, join='inner')
+    # df.drop_duplicates()
+    #
+    # labels = df['Binary Label']
+
+    #***************************************************************************
+
+    #
+    # text_train, text_valid, label_train, label_valid = train_test_split(df['clean_text'], labels, test_size=0.2,
+    #                                                                     random_state=109)
+    # tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 2), norm=None)
     # tfidf_train = tfidf_vectorizer.fit_transform(text_train)
     # tfidf_valid = tfidf_vectorizer.transform(text_valid)
-
-    hashing_vectorizer = HashingVectorizer(stop_words=stop_words.stop_words, strip_accents='unicode', ngram_range=(1, 3), norm='l1')
-    hashing_train = hashing_vectorizer.fit_transform(text_train)
-    hashing_valid = hashing_vectorizer.transform(text_valid)
-
-    #do svm
-    # our_svm(tfidf_train, label_train, tfidf_valid, label_valid)
-    our_svm(hashing_train, label_train, hashing_valid, label_valid)
+    # svm_classifier = our_svm(tfidf_train, label_train, tfidf_valid, label_valid, 'combined_trained_model.pkl', tfidf_vectorizer, 'tfidf_vectorizer.pkl')
+    #
+    # our_svm_tests(tfidf_vectorizer, svm_classifier)
 
 
-    # # DataFlair - Split the dataset WE DONT WANT THIS BECAUSE WERE ONLY LOOKING FOR TRAINING DATA
-    # # x_train, x_test, y_train, y_test = train_test_split(df['text'], labels, test_size=0.2, random_state=7)
-    # # DataFlair - Initialize a TfidfVectorizer
-    # tfidf_vectorizer = TfidfVectorizer(max_df=0.7)
-    # x_train = [readify_text(sentence) for sentence in df["text"]]
-    # y_train = labels
-    # # DataFlair - Fit and transform train set, transform test set
-    # tfidf_train = tfidf_vectorizer.fit_transform(x_train)
-    # # tfidf_test = tfidf_vectorizer.transform(x_test)
-    # # DataFlair - Initialize a PassiveAggressiveClassifier
-    # pac = PassiveAggressiveClassifier(max_iter=50)
-    # pac.fit(tfidf_train, y_train)
+
+    # *************** FINISH **********************
+    # load_trained_svm_model('combined_trained_model.pkl')
+    grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "')
+    grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
+    grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה")
+    grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה")
+    grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)")
+    grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak")
+    grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.")
 
 
 
@@ -148,3 +199,14 @@ https://www.researchgate.net/profile/Marten-Risius/publication/326405790_Automat
 (page 11)
 we want to create different functions for each classifier, and somehow work with the different results to get a more accurate analysis
 """
+
+'''
+pages talking about covid and vaccines:
+FAKE:
+1. mor sagmon: https://www.facebook.com/mor.sagmon
+2. https://www.facebook.com/groups/VaccineChoiceIL/
+3. https://www.facebook.com/groups/173406684888542/
+
+REAL:
+1. https://www.facebook.com/groups/440665513171433/about
+'''

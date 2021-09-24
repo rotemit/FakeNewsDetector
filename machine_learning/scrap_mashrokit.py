@@ -57,6 +57,7 @@ def scrap(csv_writer, pages=10, date=None):
             last_height = new_height
     else:
         for i in range(pages):
+            print("pagenum: "+str(i))
             new_height = scroll_down(driver, last_height)
             posts = driver.find_elements_by_class_name("card-wrapper")
             for post in posts:
@@ -94,6 +95,8 @@ def start_scraping(pages=None, date=None):
 
 
 if __name__ == "__main__":
-    start_scraping(date=datetime.date(2020, 1, 1))
+    # start_scraping(date=datetime.date(2020, 1, 1))
+    start_scraping(pages=1000)
+
 
 
