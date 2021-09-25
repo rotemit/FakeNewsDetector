@@ -16,6 +16,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 
 from deep_translator import GoogleTranslator #pip installed
 from heb_data_collector import get_group_posts
+from sklearn.linear_model import LogisticRegressionCV
 
 #bla
 def grade_single_post(post):
@@ -77,8 +78,27 @@ def remove_stopwords(txt):
 def readify_text(txt):
     txt = clean_txt(txt)
     txt = remove_stopwords(txt)
-    #TODO stem? https://towardsdatascience.com/getting-your-text-data-ready-for-your-natural-language-processing-journey-744d52912867
     return txt
+
+def our_clf(tfidf_train, label_train, tfidf_valid, label_valid, model_filename, vectorizer, vectorizer_filename):
+    clf_model = LogisticRegressionCV(cv=5, scoring='accuracy', random_state=0, n_jobs=-1, verbose=3, max_iter=300).fit(
+        tfidf_train, label_train)
+    # predict the labels for the text validation data
+    label_prediction = clf_model.predict(tfidf_valid)
+
+    # check model accuracy
+    print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
+    print(confusion_matrix(label_valid, label_prediction))
+
+    # save trained model
+    joblib.dump(clf_model, model_filename)
+
+    # save vectorizer
+    joblib.dump(vectorizer, vectorizer_filename)
+
+    print('finishing clf')
+    return clf_model
+
 
 '''
     Given readied data for training and validation, do:
@@ -121,6 +141,7 @@ def load_trained_svm_model(filename):
     2. Replace covid-19/coronavirus with 'Corona', as hebrew speakers write 
 '''
 def clean_text(txt):
+    txt = str(txt)
     ret = ' '.join(item for item in txt.split() if ((not (item.startswith('https://'))) and (not '.com' in item)))
     ret = ret.replace('COVID-19', 'Corona')
     ret = ret.replace('Covid-19', 'Corona')
@@ -142,52 +163,59 @@ def csv_cleaner(file):
 
 if __name__ == '__main__':
     #********************** COMBINED DAASETS **********************************
-    # # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
-    # # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
-    # # csv_cleaner('Constraint_Train.csv')
-    # # csv_cleaner('Constraint_Val.csv')
-    # # csv_cleaner('english_test_with_labels.csv')
-    # df_true = pd.read_csv('trueNewsClean.csv')
-    # df_false = pd.read_csv('fakeNewsClean.csv')
-    # df_Constraint = pd.read_csv('Constraint_TrainClean.csv')
-    # df_ConstraintVal = pd.read_csv('Constraint_ValClean.csv')
-    # df_en_test = pd.read_csv('english_test_with_labelsClean.csv')
-    # # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
-    # df_true.dropna(inplace=True)
-    # df_false.dropna(inplace=True)
-    # df_Constraint.dropna(inplace=True)
-    # df_ConstraintVal.dropna(inplace=True)
-    # df_en_test.dropna(inplace=True)
-    # frames = [df_true, df_false, df_Constraint, df_ConstraintVal, df_en_test]
-    # df = pd.concat(frames, join='inner')
-    # df.drop_duplicates()
-    #
-    # labels = df['Binary Label']
+    # csv_cleaner('trueNews.csv')     #create a new and clean csv file. uncomment only when file changes
+    # csv_cleaner('fakeNews.csv')     #create a new and clean csv file
+    # csv_cleaner('Constraint_Train.csv')
+    # csv_cleaner('Constraint_Val.csv')
+    # csv_cleaner('english_test_with_labels.csv')
+    # csv_cleaner('corona_fake.csv')
+    df_true = pd.read_csv('trueNewsClean.csv')
+    df_false = pd.read_csv('fakeNewsClean.csv')
+    df_Constraint = pd.read_csv('Constraint_TrainClean.csv')
+    df_ConstraintVal = pd.read_csv('Constraint_ValClean.csv')
+    df_en_test = pd.read_csv('english_test_with_labelsClean.csv')
+    df_corona_fake = pd.read_csv('corona_fakeClean.csv')
+    # df_false['our_labels'] = df_false.apply(lambda col: col['Poynter_Label'].upper(), axis=1)
+    df_true.dropna(inplace=True)
+    df_false.dropna(inplace=True)
+    df_Constraint.dropna(inplace=True)
+    df_ConstraintVal.dropna(inplace=True)
+    df_en_test.dropna(inplace=True)
+    df_corona_fake.dropna(inplace=True)
+    frames = [df_true, df_false, df_Constraint, df_ConstraintVal, df_en_test, df_corona_fake]
+    df = pd.concat(frames, join='inner')
+    df.drop_duplicates()
+
+    labels = df['Binary Label']
 
     #***************************************************************************
 
-    #
-    # text_train, text_valid, label_train, label_valid = train_test_split(df['clean_text'], labels, test_size=0.2,
-    #                                                                     random_state=109)
-    # tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 2), norm=None)
-    # tfidf_train = tfidf_vectorizer.fit_transform(text_train)
-    # tfidf_valid = tfidf_vectorizer.transform(text_valid)
-    # svm_classifier = our_svm(tfidf_train, label_train, tfidf_valid, label_valid, 'combined_trained_model.pkl', tfidf_vectorizer, 'tfidf_vectorizer.pkl')
-    #
-    # our_svm_tests(tfidf_vectorizer, svm_classifier)
+
+    text_train, text_valid, label_train, label_valid = train_test_split(df['clean_text'], labels, test_size=0.2,
+                                                                        random_state=109)
+    tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 2), norm=None)
+    tfidf_train = tfidf_vectorizer.fit_transform(text_train)
+    tfidf_valid = tfidf_vectorizer.transform(text_valid)
+    svm_classifier = our_svm(tfidf_train, label_train, tfidf_valid, label_valid, 'combined_trained_model.pkl', tfidf_vectorizer, 'tfidf_vectorizer.pkl')
+
+    clf_classifier = our_clf(tfidf_train, label_train, tfidf_valid, label_valid, 'combined_trained_model.pkl', tfidf_vectorizer, 'tfidf_vectorizer.pkl')
+
+    our_svm_tests(tfidf_vectorizer, clf_classifier)
 
 
 
     # *************** FINISH **********************
     # load_trained_svm_model('combined_trained_model.pkl')
-    grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "')
-    grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
-    grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה")
-    grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה")
-    grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)")
-    grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak")
-    grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.")
-
+    # grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "')
+    # grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
+    # grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה")
+    # grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה")
+    # grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)")
+    # grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak")
+    # grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.")
+    # grade_single_post("קורונה גורמת לתחלואה קשה ותמותה גם בקרב צעירים שאינם מחוסנים 📈 עד גיל 50 - מי שלא התחסנו כלל, מהווים 69% מהחולים קשה ו-96% מהנפטרים (בין התאריכים 1.6 ל-4.9). אלו העובדות. חיסון ראשון, שני או שלישי - פשוט צאו להתחסן!")
+    grade_single_post("קורונה זו לא רק 'מחלה של מבוגרים'! גם צעירים שלא מתחסנים חושפים עצמם למחלה קשה. 85% ממאושפזי הקורונה אשר נמצאים כעת במצב קריטי ומחוברים למכשיר אקמו - אינם מחוסנים. גילם הממוצע - 47. קורונה עלולה להיות מחלה קשה למבוגרים ולצעירים אבל בעיקר ללא מחוסנים. צאו להתחסן.")
+    grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ")
 
 
 """
