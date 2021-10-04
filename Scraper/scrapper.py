@@ -5,17 +5,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
-import SentimentAnalysis.analyzer.PotentialFakeNewsAnalysis
-from modules.Account import account_encoder
 from modules.Page import Page
 from modules.Group import Group
 from modules.Account import Account
+from modules.Account import account_encoder
 from modules.Post import Post
-from modules import Threshold
 import time
 from datetime import date
-from SentimentAnalysis.analyzer.PotentialFakeNewsAnalysis import analyze_user
-from SentimentAnalysis.analyzer.PotentialFakeNewsAnalysis import ananlyze_post
+from SentimentAnalysis.Analyzer import analyze_page
 
 import json
 
@@ -49,7 +46,7 @@ def init_sel():
     login in into Facebook with the giver email and password
     we use the "send_keys" method to type the given arguments
 """
-def login(driver, user_url, email, password):
+def login(driver, email, password):
     driver.get("https://www.facebook.com")
     search_email = driver.find_element_by_id("email")
     time.sleep(2)
@@ -63,11 +60,6 @@ def login(driver, user_url, email, password):
     time.sleep(3)
     global is_logged_in
     is_logged_in = True
-    # getting information about the user
-    if user_url is not None:
-        driver.get(user_url + '/about')
-        time.sleep(2)
-        return extract_profile_attributes(driver)
 
 
 # not sure why we need this, but we'll see
@@ -379,14 +371,16 @@ def int_from_human_format(x):
 
 
 def days_from_human_format(x):
-    if 'd' in x:
-        return int(x.replace('d', ''))
-    if 'w' in x:
-        return int(x.replace('w', '')) * 7
     if 'm' in x:
-        return int(x.replace('m', '')) * 30
+        return float(x.replace('m', '')) * (1/1440)
+    if 'h' in x:
+        return float(x.replace('h', '')) * (1/24)
+    if 'd' in x:
+        return float(x.replace('d', ''))
+    if 'w' in x:
+        return float(x.replace('w', '')) * 7
     if 'y' in x:
-        return int(x.replace('y', '')) * 356
+        return float(x.replace('y', '')) * 356
     return x
 
 """
@@ -745,13 +739,13 @@ def scrap_comments(driver):
     arr_index = 0
 
     for i, comm in enumerate(post_comments):
+        print(comm.text)
         lines = comm.text.split('\n')
         writer = lines[0]
         text = lines[1]
         likes = 0
         age = 0
         start_text = 1
-
         for j, line in enumerate(lines):
             if "Like" in line:
                 try:
@@ -762,7 +756,19 @@ def scrap_comments(driver):
                     text = ' '.join(lines[start_text:j])
             if "Share" in line or "Reply" in line:
                 age_arr = line.split(' ')
-                age = days_from_human_format(age_arr[4])
+                if is_logged_in:
+                    age = age_arr[len(age_arr)-1]
+                    if age == "Edited":
+                        age = age_arr[len(age_arr)-2]
+                    age = days_from_human_format(age)
+                else:
+                    try:
+                        likes = int(lines[j - 1])
+                        text = ' '.join(lines[start_text:j - 1])
+                    except:
+                        likes = 0
+                        text = ' '.join(lines[start_text:j])
+                    age = days_from_human_format(age_arr[2])
                 if text == "":
                     text = None
                 comments.insert(arr_index, {"Writer": writer, "Text": text, "Likes": likes, "Age": age})
@@ -780,20 +786,31 @@ def click_on_all(driver, element_xpath):
         try:
             elem.click()
         except:
-            webdriver.ActionChains(driver).move_to_element(elem).click(elem).perform()
+            try:
+                webdriver.ActionChains(driver).move_to_element(elem).click(elem).perform()
+            except:
+                print("couldn't click on element with text: " + elem.text)
         time.sleep(1)
     return len(elements)
 
 
 def scrap_one_post(driver, post_url):
-    driver.get(post_url)
+    post_url = check_url(post_url)
+    if is_logged_in:
+        driver.get(post_url)
+    else:
+        driver.get(post_url + to_english)
+
+    # driver.get(post_url)
     time.sleep(2)
 
     sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
     click_on_all(driver, "//div[text()='See More']")
-    while sum != 0:
+    loops = 0
+    while sum != 0 and loops < 10:
         sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
         click_on_all(driver, "//div[text()='See More']")
+        loops += 1
 
     post_writer = driver.find_elements_by_xpath("//h2[@class='gmql0nx0 l94mrbxd p1ri9a11 lzcic4wl aahdfvyu hzawbc8m']")
     if len(post_writer) == 1:
@@ -819,7 +836,35 @@ def scrap_one_post(driver, post_url):
 
     comments = scrap_comments(driver)
 
-    return Post(writer, content, comments)
+
+    # account = driver.find_elements_by_xpath("//span[@class='nc684nl6']")
+    # accounts = driver.find_elements_by_xpath("//a[@class='oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl oo9gr5id gpro0wi8 lrazzd5p']")
+    # account = None
+    # for elem in accounts:
+    #     print(elem.text)
+    #     if elem.text == writer:
+    #         account = elem
+    #         break
+    # if account is not None:
+    #     try:
+    #         account.click()
+    #     except:
+    #         webdriver.ActionChains(driver).move_to_element(account).click(account).perform()
+    #     # account[0].click()
+    #     time.sleep(2)
+    #     print(driver.current_url)
+    actions = ActionChains(driver)
+    actions.send_keys(Keys.HOME)
+    # actions.send_keys(Keys.HOME)
+    actions.perform()
+    redirect(driver, writer, False)
+    time.sleep(3)
+    redirect(driver, writer, False)
+    time.sleep(3)
+    url_account = driver.current_url
+    print(url_account)
+    account = scrap_account(driver, url_account)
+    return Post(writer, content, comments, account)
 
 
 """
@@ -837,24 +882,18 @@ def scrap_one_post(driver, post_url):
     user_mail: the mail the user uses to enter its Facebook account.
     user_password: the password the user uses to enter its Facebook account.
 """
-def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=None, onlyPosts=False, posts=0, loging_in=False, user_url=None, user_mail=None, user_password=None):
+def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=None, onlyPosts=False, posts=0, loging_in=False, user_mail=None, user_password=None):
     driver = init_sel()
-    user_summary = {}
-
-    # we only need summary if we check account right now,
-    # so if there is no user_name the function will not get the summary
-    if url_account is None:
-        user_url = None
 
     if loging_in:
-        user_summary = login(driver, user_url, user_mail, user_password)
+        login(driver, user_mail, user_password)
 
     if url_post is not None:
         post = scrap_one_post(driver, url_post)
         # print(post)
-        with open('BasicGraphPost.json', 'w', encoding='UTF8') as outfile:
+        with open('MyPost.json', 'w', encoding='UTF8') as outfile:
             json.dump(post, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
-        print(ananlyze_post(post))
+        # print(ananlyze_post(post))
         driver.quit()
         return post
 
@@ -867,14 +906,11 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=Non
             if onlyPosts:
                 return posts
             account.set_posts(posts)
-        with open('BasicGraphAccount.json', 'w', encoding='UTF8') as outfile:
+        with open('MyAccount.json', 'w', encoding='UTF8') as outfile:
             json.dump(account, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
 
-        if user_summary is not None:
-            account.set_trust_value(Threshold.AccountThreshold("", user_summary, 23.82, 244.34, 17.12, 37))
-            print("trust value of account: " + str(account.account_trust_value))
         print(account)
-        print(analyze_user(account))
+        # print(analyze_user(account))
         driver.quit()
         return account
 
@@ -886,10 +922,10 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=Non
             if onlyPosts:
                 return posts
             page.set_posts(posts)
-        with open('BasicGraphPage.json', 'w', encoding='UTF8') as outfile:
+        with open('MyPage.json', 'w', encoding='UTF8') as outfile:
             json.dump(page, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
         print(page)
-        print(analyze_user(page))
+        # print(analyze_user(page))
         driver.quit()
         return page
 
@@ -901,10 +937,10 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=Non
             if onlyPosts:
                 return posts
             group.set_posts(posts)
-        with open('BasicGraphGroup.json', 'w', encoding='UTF8') as outfile:
+        with open('MyGroup.json', 'w', encoding='UTF8') as outfile:
             json.dump(group, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
         print(group)
-        print(analyze_user(group))
+        # print(analyze_user(group))
         driver.quit()
         return group
 
@@ -913,14 +949,14 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=Non
 
 if __name__ == '__main__':
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # account = scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    page = scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # posts = scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=20, onlyPosts=True, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_post="https://www.facebook.com/groups/336084457286212/permalink/648330709394917",  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    scrap_facebook(url_post="https://www.facebook.com/yoram.morim/posts/10158760492028533",  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # scrap_facebook(url_post="https://www.facebook.com/groups/1871902839652453/permalink/2216079538568113")
     # print(posts)
-
+    print(analyze_page(page))
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")
     # "https://www.facebook.com/groups/bathefer1")

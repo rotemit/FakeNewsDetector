@@ -1,5 +1,7 @@
 from . import Subjects
-from googletrans import Translator
+from deep_translator import GoogleTranslator
+from ..analyzer.SimpleSentimentAnalysis import find_word_in_subjects
+
 
 def analyze_profile_subjects(posts):
     # get total posts num

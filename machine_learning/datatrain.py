@@ -7,15 +7,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
-import stop_words
-from yap_server import get_lemma
+from machine_learning.stop_words import stop_words
+# from yap_server import get_lemma
 from sklearn import svm
 from sklearn import metrics
 import joblib
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn import linear_model
 from deep_translator import GoogleTranslator #pip installed
-from heb_data_collector import get_group_posts
+# from machine_learning.heb_data_collector import get_group_posts
 from sklearn.linear_model import LogisticRegressionCV
 from nltk.stem import PorterStemmer
 from nltk.stem import LancasterStemmer
@@ -23,10 +23,10 @@ from nltk.stem import WordNetLemmatizer
 # import nltk
 # nltk.download('wordnet')
 
-def grade_single_post(post):
+def grade_single_post(post,svm_model, vectorizer):
     #load trained model and fitted vectorizer
-    svm_model = joblib.load('combined_trained_model.pkl')
-    vectorizer = joblib.load('tfidf_vectorizer.pkl')
+    svm_model = joblib.load(svm_model)
+    vectorizer = joblib.load(vectorizer)
     #translate post to english, regardless of source language
     translator = GoogleTranslator()
     translated_post = translator.translate(post)
@@ -77,7 +77,7 @@ def clean_txt (txt):
     Remove frequent and unimportant words
 """
 def remove_stopwords(txt):
-    stopwords = stop_words.stop_words
+    stopwords = stop_words
     tokens = txt.split(" ")
     resultwords = [word for word in tokens if word not in stopwords]
     result = ' '.join(resultwords)
@@ -231,16 +231,18 @@ if __name__ == '__main__':
     #clean_datasets()  # uncomment when datasets change, or when cleaning process changes
     # training_process()  #uncomment when we want to redo training
     # *************** MANUAL CHECKS **********************
-    grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "')
-    grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
-    grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה")
-    grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה")
-    grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)")
-    grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak")
-    grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.")
-    grade_single_post("קורונה גורמת לתחלואה קשה ותמותה גם בקרב צעירים שאינם מחוסנים 📈 עד גיל 50 - מי שלא התחסנו כלל, מהווים 69% מהחולים קשה ו-96% מהנפטרים (בין התאריכים 1.6 ל-4.9). אלו העובדות. חיסון ראשון, שני או שלישי - פשוט צאו להתחסן!")
-    grade_single_post("קורונה זו לא רק 'מחלה של מבוגרים'! גם צעירים שלא מתחסנים חושפים עצמם למחלה קשה. 85% ממאושפזי הקורונה אשר נמצאים כעת במצב קריטי ומחוברים למכשיר אקמו - אינם מחוסנים. גילם הממוצע - 47. קורונה עלולה להיות מחלה קשה למבוגרים ולצעירים אבל בעיקר ללא מחוסנים. צאו להתחסן.")
-    grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ")
+    svm_model = 'combined_trained_model.pkl'
+    vectorizer = 'tfidf_vectorizer.pkl'
+    grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "', svm_model, vectorizer)
+    grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", svm_model, vectorizer)
+    grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה", svm_model, vectorizer)
+    grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה", svm_model, vectorizer)
+    grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)", svm_model, vectorizer)
+    grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak", svm_model, vectorizer)
+    grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.", svm_model, vectorizer)
+    grade_single_post("קורונה גורמת לתחלואה קשה ותמותה גם בקרב צעירים שאינם מחוסנים 📈 עד גיל 50 - מי שלא התחסנו כלל, מהווים 69% מהחולים קשה ו-96% מהנפטרים (בין התאריכים 1.6 ל-4.9). אלו העובדות. חיסון ראשון, שני או שלישי - פשוט צאו להתחסן!", svm_model, vectorizer)
+    grade_single_post("קורונה זו לא רק 'מחלה של מבוגרים'! גם צעירים שלא מתחסנים חושפים עצמם למחלה קשה. 85% ממאושפזי הקורונה אשר נמצאים כעת במצב קריטי ומחוברים למכשיר אקמו - אינם מחוסנים. גילם הממוצע - 47. קורונה עלולה להיות מחלה קשה למבוגרים ולצעירים אבל בעיקר ללא מחוסנים. צאו להתחסן.", svm_model, vectorizer)
+    grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ", svm_model, vectorizer)
 
 
 """

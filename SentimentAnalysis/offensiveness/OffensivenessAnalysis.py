@@ -1,4 +1,4 @@
-from analyzer.offensiveness import OffensiveWords
+from SentimentAnalysis.offensiveness import OffensiveWords
 from modules.AnalysisResult import AnalysisResult
 
 # main func - determines the offensiveness level of user.

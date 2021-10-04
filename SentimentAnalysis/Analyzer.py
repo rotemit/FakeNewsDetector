@@ -1,36 +1,76 @@
-from analyzer.offensiveness import OffensivenessAnalysis
-from analyzer.fake_news import PotentialFakeNewsAnalysis
-from analyzer.trigers import TrigersAnalysis
-from analyzer.utv import UTVAnalysis
-from data_contracts.scan_result import ScanResult
-from data_contracts.analysis_result import AnalysisResult
+from SentimentAnalysis.analyzer.machineLeaningAnalyzer import grading_posts
+from SentimentAnalysis.analyzer import PotentialFakeNewsAnalysis
+from utv import UTVAnalysis
+from modules.Scan_result import ScanResult
+from modules.AnalysisResult import AnalysisResult
+
 
 ############ analysis manager ############
 
-# gets facebook user object, performs all analysis, and returns results as ScanResult object
-def analyze_user(fb_user):
-    posts = fb_user.posts
-
+# gets account object, performs all analysis, and returns results as ScanResult object
+def analyze_account(account):
+    posts = account.posts
+    utv_result = UTVAnalysis.analyze_user(account)
     if len(posts)==0:
         # result for none posts profile
-        return create_not_enough_posts_result(fb_user, "This user doesn't have any posts, hence does not have result.")
+        return create_not_enough_posts_result(account, "This user doesn't have any posts, hence does not have result.", utv_result)
 
     elif len(posts)<=5:
         # result for not enough posts profile
-        return create_not_enough_posts_result(fb_user, "This user doesn't have enough posts to derive conclusions from.")
+        return create_not_enough_posts_result(account, "This user doesn't have enough posts to derive conclusions from.", utv_result)
 
     else:
         # perform all analyses
-        offensiveness_result = OffensivenessAnalysis.analyze_user(fb_user)
-        potentialFakeNews_result = PotentialFakeNewsAnalysis.analyze_user(fb_user)
-        trigers_result = TrigersAnalysis.analyze_user(fb_user)
-        utv_result = UTVAnalysis.analyze_user(fb_user)
+        sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_user(account)
+        machine_learning_result :AnalysisResult= grading_posts(posts)
+        machine_learning_result.text = "The account " + machine_learning_result.text
 
-    return ScanResult(fb_user.name, fb_user.url, offensiveness_result, potentialFakeNews_result, trigers_result, utv_result)
+    return ScanResult(account.name, sentimentAnalyzer_result, machine_learning_result, utv_result)
+
+def analyze_page(page):
+    posts = page.posts
+    utv_result = AnalysisResult("N\A", "No Trust Value result to Facebook Page", 0)
+
+    if len(posts)==0:
+        # result for none posts page
+        return create_not_enough_posts_result(account, "This page doesn't have any posts, hence does not have result.", utv_result)
+
+    elif len(posts)<=5:
+        # result for not enough posts page
+        return create_not_enough_posts_result(account, "This page doesn't have enough posts to derive conclusions from.", utv_result)
+
+    else:
+        # perform all analyses
+        sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_user(page)
+        machine_learning_result: AnalysisResult = grading_posts(posts)
+        machine_learning_result.text = "The page " + machine_learning_result.text
+
+    return ScanResult(page.name, sentimentAnalyzer_result, machine_learning_result, utv_result)
+
+
+def analyze_group(group):
+    posts = group.posts
+    utv_result = AnalysisResult("N\A", "No Trust Value result to Facebook Group", 0)
+
+    if len(posts) == 0:
+        # result for none posts group
+        return create_not_enough_posts_result(account, "This group doesn't have any posts, hence does not have result.",utv_result)
+
+    elif len(posts) <= 5:
+        # result for not enough posts group
+        return create_not_enough_posts_result(account,"This group doesn't have enough posts to derive conclusions from.", utv_result)
+
+    else:
+        # perform all analyses
+        sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_user(group)
+        machine_learning_result: AnalysisResult = grading_posts(posts)
+        machine_learning_result.text = "The group " + machine_learning_result.text
+
+    return ScanResult(group.name, sentimentAnalyzer_result, machine_learning_result, utv_result)
+
 
 # create result for profile with not enough posts (0 posts or not enough)
-def create_not_enough_posts_result(fb_user, text_result):
-        text_analyzers_result = AnalysisResult("N\A", text_result, 0)
-        utv_result = UTVAnalysis.analyze_user(fb_user)
-        result = ScanResult(fb_user.name, fb_user.url, text_analyzers_result, text_analyzers_result, text_analyzers_result, utv_result)
-        return result
+def create_not_enough_posts_result(to_analyze, text_result, utv_result):
+    text_analyzers_result = AnalysisResult("N\A", text_result, 0)
+    result = ScanResult(to_analyze.name, text_analyzers_result, text_analyzers_result, utv_result)
+    return result
