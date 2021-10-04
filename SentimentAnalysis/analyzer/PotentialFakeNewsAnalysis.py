@@ -2,8 +2,6 @@ import re
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from modules.AnalysisResult import AnalysisResult
 from deep_translator import GoogleTranslator
-# import nltk
-# nltk.download('vader_lexicon')
 sid = SentimentIntensityAnalyzer()
 
 def ananlyze_post(post):

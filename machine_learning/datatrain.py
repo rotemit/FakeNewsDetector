@@ -13,7 +13,7 @@ from sklearn import svm
 from sklearn import metrics
 import joblib
 from sklearn.feature_extraction.text import HashingVectorizer
-
+from sklearn import linear_model
 from deep_translator import GoogleTranslator #pip installed
 from heb_data_collector import get_group_posts
 from sklearn.linear_model import LogisticRegressionCV
@@ -104,8 +104,9 @@ def readify_text(txt):
     return txt
 
 def our_clf(tfidf_train, label_train, tfidf_valid, label_valid, model_filename, vectorizer, vectorizer_filename):
-    clf_model = LogisticRegressionCV(cv=5, scoring='accuracy', random_state=0, n_jobs=-1, verbose=3, max_iter=300).fit(
-        tfidf_train, label_train)
+    clf_model = linear_model.Lasso(alpha=0.1)
+    clf_model.fit(tfidf_train, label_train)
+    # label_prediction = reg.predict(tfidf_valid)
     # predict the labels for the text validation data
     # label_prediction = clf_model.score(tfidf_valid)
 
