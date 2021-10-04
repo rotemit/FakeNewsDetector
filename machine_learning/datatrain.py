@@ -36,6 +36,7 @@ def grade_single_post(post):
     y_pred = svm_model.predict(vectorized_post)
     #print result
     print("post:\n" + post + "\ntranslated post:\n" + translated_post + "\nreadied post:\n"+readied_post+"\ngrade: " + str(y_pred))
+    return y_pred
 
 '''
     manual tests for svm
@@ -227,7 +228,7 @@ def training_process():
 
 if __name__ == '__main__':
     #clean_datasets()  # uncomment when datasets change, or when cleaning process changes
-    training_process()  #uncomment when we want to redo training
+    # training_process()  #uncomment when we want to redo training
     # *************** MANUAL CHECKS **********************
     grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "')
     grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
