@@ -1,6 +1,6 @@
 from modules.AnalysisResult import AnalysisResult
 
-# the output of the analyzer - manager of all the analysis
+# the output of the analyzers - manager of all the analysis
 # gathers all outputs of all aalysis
 class ScanResult:
     user_name: str

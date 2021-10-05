@@ -12,7 +12,9 @@ from modules.Account import account_encoder
 from modules.Post import Post
 import time
 from datetime import date
-from SentimentAnalysis.Analyzer import analyze_page
+from Analyzer.Analyzer import analyze_page
+from Analyzer.Analyzer import analyze_account
+from Analyzer.Analyzer import analyze_group
 
 import json
 
@@ -951,12 +953,15 @@ if __name__ == '__main__':
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # account = scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
-    page = scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # page = scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # posts = scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=20, onlyPosts=True, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_post="https://www.facebook.com/groups/336084457286212/permalink/648330709394917",  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_post="https://www.facebook.com/groups/1871902839652453/permalink/2216079538568113")
+    group = scrap_facebook(url_group="https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # print(posts)
-    print(analyze_page(page))
+    # print(analyze_page(page))
+    # print(analyze_account(account))
+    print(analyze_group(group))
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")
     # "https://www.facebook.com/groups/bathefer1")

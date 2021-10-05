@@ -1,6 +1,5 @@
-from SentimentAnalysis.analyzer.machineLeaningAnalyzer import grading_posts
-from SentimentAnalysis.analyzer import PotentialFakeNewsAnalysis
-from utv import UTVAnalysis
+from Analyzer.analyzers.machineLeaningAnalyzer import grading_posts
+from Analyzer.analyzers import PotentialFakeNewsAnalysis, UTVAnalysis
 from modules.Scan_result import ScanResult
 from modules.AnalysisResult import AnalysisResult
 
