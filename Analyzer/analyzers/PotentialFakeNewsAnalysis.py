@@ -4,32 +4,37 @@ from modules.AnalysisResult import AnalysisResult
 from deep_translator import GoogleTranslator
 sid = SentimentIntensityAnalyzer()
 
-def ananlyze_post(post):
-    potentialFakePostsNum = 0
-    if post.content is not None:
-        potentialFakePostsNum = check_fake_potential(post.content)
-    potentialFakeCommentsNum = 0
-    commentsNum = len(post.comments)
-    if commentsNum == 0:
-        return
-    for comm in post.comments:
-        if comm['Text'] is not None:
-            if check_fake_potential(comm['Text']):
-                potentialFakeCommentsNum += 1
-
-    # calculate rate
-    potentialFakeRate = potentialFakeCommentsNum / commentsNum
-
-    # convert to analysis result
-    percent = int((potentialFakeRate * 100) // 1)
-    percentResult = str(percent) + "%"
-    textResult = convert_potential_fake_rate_to_text(potentialFakeRate)
-    print("post fake: " + str(potentialFakePostsNum))
-    return AnalysisResult(percentResult, textResult, potentialFakeRate)
+# def ananlyze_comments(post):
+#     potentialFakeCommentsNum = 0
+#     commentsNum = len(post.comments)
+#     if commentsNum == 0:
+#         return AnalysisResult("N/A", "No comments", 0)
+#     for comm in post.comments:
+#         if comm['Text'] is not None:
+#             if check_fake_potential(comm['Text']):
+#                 potentialFakeCommentsNum += 1
+#
+#     # calculate rate
+#     potentialFakeRate = potentialFakeCommentsNum / commentsNum
+#
+#     # convert to analysis result
+#     percent = int((potentialFakeRate * 100) // 1)
+#     percentResult = str(percent) + "%"
+#     textResult = convert_potential_fake_rate_to_text(potentialFakeRate)
+#     return AnalysisResult(percentResult, textResult, potentialFakeRate)
 
 
-def analyze_user(fb_user):
-    posts = fb_user.posts
+def analyze_one_post(post):
+    if post is not None:
+        if check_fake_potential(post):
+            return AnalysisResult("100%", "Post probably contains FAKE-NEWS!", 1.0)
+        else:
+            return AnalysisResult("0%", "Post seems clean from fake-news about Covid 19", 0)
+    else:
+        return AnalysisResult("N/A", "No Post", 0)
+
+
+def analyze_sentiments(posts):
     potentialFakePostsNum = 0
     postsNum = len(posts) # get total posts num  
 
@@ -121,11 +126,11 @@ def convert_potential_fake_rate_to_text(potentialFakeRate):
 # used to convert offensive rate to text result.
 # important! keep the rates going up from 0 to 1.
 potentialFakeNewsAnalysisTextResult = {
-    0.0 : "User is clean of potential fake news!",
-    0.1 : "User is ok.",
-    0.2 : "User rarely post potential fake news.",
-    0.4 : "User often post potential fake news, pay attention!",
-    0.6 : "User is problematic, most posts are potential fake news.",
-    0.8 : "User is problematic, the vast majority of posts are potential fake news!",
-    1 : "USER IS DANGEROUS! All posts are potential fake news!"
+    0.0 : "is clean of potential fake news!",
+    0.1 : "is ok.",
+    0.2 : "rarely post potential fake news.",
+    0.4 : "often post potential fake news, pay attention!",
+    0.6 : "is problematic, most posts are potential fake news.",
+    0.8 : "is problematic, the vast majority of posts are potential fake news!",
+    1 : "is DANGEROUS! All posts are potential fake news!"
 }

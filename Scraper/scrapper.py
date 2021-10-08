@@ -15,7 +15,8 @@ from datetime import date
 from Analyzer.Analyzer import analyze_page
 from Analyzer.Analyzer import analyze_account
 from Analyzer.Analyzer import analyze_group
-
+from Analyzer.Analyzer import analyze_post
+import pprint
 import json
 
 """
@@ -796,7 +797,7 @@ def click_on_all(driver, element_xpath):
     return len(elements)
 
 
-def scrap_one_post(driver, post_url):
+def scrap_one_post(driver, post_url, writer_posts_num):
     post_url = check_url(post_url)
     if is_logged_in:
         driver.get(post_url)
@@ -861,11 +862,31 @@ def scrap_one_post(driver, post_url):
     actions.perform()
     redirect(driver, writer, False)
     time.sleep(3)
-    redirect(driver, writer, False)
-    time.sleep(3)
+    # not_wanted_url = driver.current_url
+    # while "groups" in driver.current_url:
+    writer_page_btn = driver.find_elements_by_xpath("//span[@class='nc684nl6']")
+    counter = 0
+    for btn in writer_page_btn:
+        if writer in btn.text:
+            counter += 1
+            if counter > 1:
+                webdriver.ActionChains(driver).move_to_element(btn).click(btn).perform()
+                time.sleep(3)
+                if "groups" not in driver.current_url:
+                    break
+            # #
+
+        # print(str(i) + ": " + btn.text)
+        # actions.send_keys(Keys.END)
+        # actions.perform()
+        # redirect(driver, writer, False)
+        # time.sleep(3)
     url_account = driver.current_url
     print(url_account)
     account = scrap_account(driver, url_account)
+    if writer_posts_num > 0:
+        posts = scrap_posts(driver, url_account, writer_posts_num)
+        account.set_posts(posts)
     return Post(writer, content, comments, account)
 
 
@@ -891,7 +912,7 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=Non
         login(driver, user_mail, user_password)
 
     if url_post is not None:
-        post = scrap_one_post(driver, url_post)
+        post = scrap_one_post(driver, url_post, posts)
         # print(post)
         with open('MyPost.json', 'w', encoding='UTF8') as outfile:
             json.dump(post, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
@@ -948,23 +969,32 @@ def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=Non
 
     driver.quit()
 
+def print_dict(dictio):
+    for key, value in dictio:
+        print(str(key)+':')
+        print(str(value))
+        print('\n')
 
 if __name__ == '__main__':
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # account = scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # account = scrap_facebook(url_account="https://www.facebook.com/danny.bartal.3", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # page = scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # posts = scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=20, onlyPosts=True, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # scrap_facebook(url_post="https://www.facebook.com/groups/336084457286212/permalink/648330709394917",  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # scrap_facebook(url_post="https://www.facebook.com/groups/1871902839652453/permalink/2216079538568113")
-    group = scrap_facebook(url_group="https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    post = scrap_facebook(url_post="https://www.facebook.com/groups/336084457286212/permalink/648330709394917", posts=20,  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # post = scrap_facebook(url_post="https://www.facebook.com/groups/813369869468028/posts/1062235314581481", loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # group = scrap_facebook(url_group="https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # page = scrap_facebook(url_page="https://www.facebook.com/Conspiralla/", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # print(posts)
+    dicto = analyze_post(post)
+    print_dict(dicto)
     # print(analyze_page(page))
     # print(analyze_account(account))
-    print(analyze_group(group))
+    # print(analyze_group(group))
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")
     # "https://www.facebook.com/groups/bathefer1")
     # post-link: "https://www.facebook.com/permalink.php?story_fbid=1510260152643112&id=100009774256825")
     # "https://www.facebook.com/Gilad.Agam"
-#stupid
+    # group: "https://www.facebook.com/Conspiralla/"

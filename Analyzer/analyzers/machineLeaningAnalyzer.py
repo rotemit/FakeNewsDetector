@@ -12,13 +12,29 @@ def grading_posts(posts):
         if(check_covid_relateness(post) > COVID_PERCENT_ABOVE):
             counter += grade_single_post(post, model, vectorizer)[0]
             amount += 1
-    if amount == 0:
+    if amount <= 5:
        return AnalysisResult("N\A", "is not talking about Covid 19", 1)
 
     grade = counter / amount
     percent = int((grade * 100) // 1)
     percentResult = str(percent) + "%"
     return AnalysisResult(percentResult, convert_potential_fake_rate_to_text(grade), grade)
+
+def grading_one_post(post):
+    model = "machine_learning/combined_trained_model.pkl"
+    vectorizer = "machine_learning/tfidf_vectorizer.pkl"
+    if (check_covid_relateness(post) > COVID_PERCENT_ABOVE):
+        grade = grade_single_post(post, model, vectorizer)[0]
+        percent = int((grade * 100) // 1)
+        percentResult = str(percent) + "%"
+        if grade:
+            textResult = "This post seems clean of fake news"
+        else:
+            textResult = "This post seems to contain fake news!"
+        return AnalysisResult(percentResult, textResult, grade)
+    else:
+        AnalysisResult("N\A", "The post is not talking about Covid 19", 1)
+
 
 def convert_potential_fake_rate_to_text(potentialFakeRate):
     for rate in MLAnalysisTextResult.keys():
