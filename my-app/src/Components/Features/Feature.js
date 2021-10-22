@@ -1,8 +1,10 @@
 import React from 'react';
 import './Feature.css';
 import { useHistory } from "react-router-dom";
+import { Button } from 'react-bootstrap';
 
-function Feature(porps) {
+
+function Feature(props) {
     const history = useHistory();
 
   function handleClick() {
@@ -10,12 +12,11 @@ function Feature(porps) {
   }
     return (
       <div>
-          <div className='actions'>
-            <button className='btn' onClick={handleClick}>
+          <button class="ui blue button" className="btn1">{props.text}</button>
+            {/* <button type="button" class="btn btn-primary btn-lg" onClick={handleClick}>
                 {porps.text}
-            </button>
+            </button> */}
         </div>
-      </div>
     );
 }
 

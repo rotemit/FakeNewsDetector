@@ -6,11 +6,23 @@ export const HomePage = () => {
     // const {todo, setTodo} = useState([])
    
     return(
-        <div className='form'>
-            <Feature text="Scan Profile"/>
-            <Feature text="Scan post"/>
-            <Feature text="about"/>
-            <Feature text="contact"/>
-        </div>    
+        <div className="header">
+            <label className='title'>Welcome to detect fake news app!</label>
+            {/* <div className='.form-features'> */}
+                <div className='features'>
+                    <Feature text="Scan Post" className='feature' />
+                    <Feature text="Scan Post" />
+                {/* </div>             */}
+                {/* <div className='features-end'> */}
+                    <Feature text="Scan Post" />
+                    <Feature text="Scan Post" />
+                </div>
+            {/* </div> */}
+
+            
+        </div>
+       
+        
     )
 }
+
