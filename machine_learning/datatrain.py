@@ -23,7 +23,7 @@ from nltk.stem import WordNetLemmatizer
 # import nltk
 # nltk.download('wordnet')
 
-def grade_single_post(post,svm_model, vectorizer):
+def grade_single_post(post, svm_model, vectorizer):
     #load trained model and fitted vectorizer
     svm_model = joblib.load(svm_model)
     vectorizer = joblib.load(vectorizer)
