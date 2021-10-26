@@ -5,7 +5,7 @@ import itertools
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix,classification_report
 from machine_learning.stop_words import stop_words
 from yap_server import get_keyWords
 from sklearn import svm
@@ -19,6 +19,7 @@ from sklearn.linear_model import LogisticRegressionCV
 from nltk.stem import PorterStemmer
 from nltk.stem import LancasterStemmer
 from nltk.stem import WordNetLemmatizer
+import matplotlib.pyplot as plt
 # import nltk
 # nltk.download('wordnet')
 #*********imports for deep learning************
@@ -28,6 +29,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Embedding, LSTM, Conv1D, MaxPool1D
 import gensim
 
+#pips: pip install tensorflow --user
+#       pip install gensim
 
 def grade_single_post(post, svm_model, vectorizer):
     #load trained model and fitted vectorizer
@@ -253,7 +256,15 @@ def training_combined_eng_datasets():
 #==========================HEBREW TRAINING=========================================================
 '''
     Training for Hebrew dataset. with helper function
+    all the changes of the new word2vec in gensim: https://github.com/RaRe-Technologies/gensim/wiki/Migrating-from-Gensim-3.x-to-4
 '''
+
+def from_str_to_lst(text):
+    text = text.replace("\'", "")
+    text = text.replace("]", "")
+    text = text.replace("[", "")
+    arr = text.split(', ')
+    return arr
 
 def get_weight_matrix(model, vocab_size, vocab, DIM=100):
     weight_matrix = np.zeros((vocab_size, DIM))
@@ -262,24 +273,26 @@ def get_weight_matrix(model, vocab_size, vocab, DIM=100):
     return weight_matrix
 
 def training_heb(filename):
-    csv_cleaner(filename, heb=True)
+    # csv_cleaner(filename, heb=True)
     clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
     df = pd.read_csv(clean_filename)
+    df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
     X = df['keywords'] #TODO check this is a list of lists
     DIM = 100
-    w2v_model = gensim.models.Word2Vec(sentences=X, size=DIM, window=10, min_count=1)
-    print(len(w2v_model.wv.vocab)) #this is for us, see how many words came from the model
+    w2v_model = gensim.models.Word2Vec(sentences=X,  vector_size=DIM, window=10, min_count=1)
+    print(len(w2v_model.wv)) #this is for us, see how many words came from the model
     #TRAINING
     tokenizer = Tokenizer()
     tokenizer.fit_on_texts(X)
     X = tokenizer.texts_to_sequences(X) #convert vectors to sequences
-    print('Word Indexes:\n'+tokenizer.word_index)
-    maxlen = 1000
+    print('Word Indexes:')
+    print(tokenizer.word_index)
+    maxlen = 50 #after checking the histogram of the length of all items in X
     X = pad_sequences(X, maxlen=maxlen)
-    vocab_size = len(tokenizer.word_index + 1)
-    embedding_vectors = get_weight_matrix(model=model, vocab_size=vocab_size, vocab=vocab, DIM=100)
+    vocab_size = len(tokenizer.word_index) + 1
+    embedding_vectors = get_weight_matrix(w2v_model, vocab_size, tokenizer.word_index, DIM=DIM)
     model = Sequential()
-    model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=False))
+    model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=True))
     model.add(LSTM(units=128))
     model.add(Dense(1, activation = 'sigmoid'))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
@@ -290,7 +303,7 @@ def training_heb(filename):
     model.fit(X_train, y_train, validation_split=0.3, epochs=6)
     #TESTING
     y_pred = (model.predict(X_test)>=0.5).astype(int)
-    accuracy_score(y_test, y_pred)
+    print(accuracy_score(y_test, y_pred))
     print(classification_report(y_test, y_pred))
 #======================================================================================================
 
