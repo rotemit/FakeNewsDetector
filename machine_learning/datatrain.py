@@ -1,5 +1,4 @@
 import csv
-#testtt
 import numpy as np
 import pandas as pd
 import itertools
@@ -8,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 from machine_learning.stop_words import stop_words
-# from yap_server import get_lemma
+from yap_server import get_keyWords
 from sklearn import svm
 from sklearn import metrics
 import joblib
@@ -22,6 +21,13 @@ from nltk.stem import LancasterStemmer
 from nltk.stem import WordNetLemmatizer
 # import nltk
 # nltk.download('wordnet')
+#*********imports for deep learning************
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Embedding, LSTM, Conv1D, MaxPool1D
+import gensim
+
 
 def grade_single_post(post, svm_model, vectorizer):
     #load trained model and fitted vectorizer
@@ -60,7 +66,7 @@ def grade_post (post, machine, classifer):
 """
     Remove punctuation
 """
-def clean_txt (txt):
+def remove_punc(txt):
     #make lowercase
     txt = txt.lower()
     # initializing punctuations string
@@ -97,7 +103,7 @@ def our_lemmatizer(txt):
     return toreturn
 
 def readify_text(txt):
-    txt = clean_txt(txt)
+    txt = remove_punc(txt)
     txt = remove_stopwords(txt)
     # txt = our_stemmer(txt)
     txt = our_lemmatizer(txt)
@@ -179,19 +185,36 @@ def clean_text(txt):
     return ret
 
 '''
-    Given a dataframe with Text column, remove all links from this column
+    Clean text, for Hebrew data:
+    1. Remove links
+    2. Remove punctuation
 '''
-def clean_dataset(df):
-    df['clean_text'] = df.apply(lambda row: clean_text(row['Text']), axis=1)
+def clean_heb_text(txt):
+    txt = str(txt)
+    ret = ' '.join(item for item in txt.split() if ((not (item.startswith('https://'))) and (not '.com' in item)))
+    ret = remove_punc(ret)
+    return ret
 
-def csv_cleaner(file):
+'''
+    Given a dataframe with Text column, clean text, and if it's Hebrew, extract keywords.
+    Both are in additional columns
+'''
+def clean_dataset(df, heb=False):
+    if heb:
+        df['clean_text'] = df.apply(lambda row: clean_heb_text(row['text']), axis=1)
+        df['keywords'] = df.apply(lambda row: get_keyWords(row['clean_text']), axis=1)
+    else:
+        df['clean_text'] = df.apply(lambda row: clean_text(row['Text']), axis=1)
+
+def csv_cleaner(file, heb=False):
     df = pd.read_csv(file)
     df = df.drop_duplicates()
-    clean_dataset(df)
+    df = df[df['binary label'].notna()] #we don't want to waste time cleaning unusable rows
+    clean_dataset(df, heb)
     new_name = file.rsplit(".", 1)[0] + 'Clean.csv'
     df.to_csv(new_name, encoding='utf-8', index=False, mode='w+')
 
-def clean_datasets():
+def clean_combined_eng_datasets():
     csv_cleaner('trueNews.csv')
     csv_cleaner('fakeNews.csv')
     csv_cleaner('Constraint_Train.csv')
@@ -199,7 +222,7 @@ def clean_datasets():
     csv_cleaner('english_test_with_labels.csv')
     csv_cleaner('corona_fake.csv')
 
-def training_process():
+def training_combined_eng_datasets():
     #********************** COMBINED DAASETS **********************************
     df_true = pd.read_csv('trueNewsClean.csv')
     df_false = pd.read_csv('fakeNewsClean.csv')
@@ -227,23 +250,70 @@ def training_process():
     #clf_classifier = our_clf(tfidf_train, label_train, tfidf_valid, label_valid, 'CLF_combined_trained_model.pkl', tfidf_vectorizer, 'CLF_tfidf_vectorizer.pkl')
     our_svm_tests(tfidf_vectorizer, svm_classifier)
 
-if __name__ == '__main__':
-    #clean_datasets()  # uncomment when datasets change, or when cleaning process changes
-    # training_process()  #uncomment when we want to redo training
-    # *************** MANUAL CHECKS **********************
-    svm_model = 'combined_trained_model.pkl'
-    vectorizer = 'tfidf_vectorizer.pkl'
-    grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "', svm_model, vectorizer)
-    grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", svm_model, vectorizer)
-    grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה", svm_model, vectorizer)
-    grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה", svm_model, vectorizer)
-    grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)", svm_model, vectorizer)
-    grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak", svm_model, vectorizer)
-    grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.", svm_model, vectorizer)
-    grade_single_post("קורונה גורמת לתחלואה קשה ותמותה גם בקרב צעירים שאינם מחוסנים 📈 עד גיל 50 - מי שלא התחסנו כלל, מהווים 69% מהחולים קשה ו-96% מהנפטרים (בין התאריכים 1.6 ל-4.9). אלו העובדות. חיסון ראשון, שני או שלישי - פשוט צאו להתחסן!", svm_model, vectorizer)
-    grade_single_post("קורונה זו לא רק 'מחלה של מבוגרים'! גם צעירים שלא מתחסנים חושפים עצמם למחלה קשה. 85% ממאושפזי הקורונה אשר נמצאים כעת במצב קריטי ומחוברים למכשיר אקמו - אינם מחוסנים. גילם הממוצע - 47. קורונה עלולה להיות מחלה קשה למבוגרים ולצעירים אבל בעיקר ללא מחוסנים. צאו להתחסן.", svm_model, vectorizer)
-    grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ", svm_model, vectorizer)
+#==========================HEBREW TRAINING=========================================================
+'''
+    Training for Hebrew dataset. with helper function
+'''
 
+def get_weight_matrix(model, vocab_size, vocab, DIM=100):
+    weight_matrix = np.zeros((vocab_size, DIM))
+    for word,i in vocab.items():
+        weight_matrix[i] = model.wv[word]
+    return weight_matrix
+
+def training_heb(filename):
+    csv_cleaner(filename, heb=True)
+    clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
+    df = pd.read_csv(clean_filename)
+    X = df['keywords'] #TODO check this is a list of lists
+    DIM = 100
+    w2v_model = gensim.models.Word2Vec(sentences=X, size=DIM, window=10, min_count=1)
+    print(len(w2v_model.wv.vocab)) #this is for us, see how many words came from the model
+    #TRAINING
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts(X)
+    X = tokenizer.texts_to_sequences(X) #convert vectors to sequences
+    print('Word Indexes:\n'+tokenizer.word_index)
+    maxlen = 1000
+    X = pad_sequences(X, maxlen=maxlen)
+    vocab_size = len(tokenizer.word_index + 1)
+    embedding_vectors = get_weight_matrix(model=model, vocab_size=vocab_size, vocab=vocab, DIM=100)
+    model = Sequential()
+    model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=False))
+    model.add(LSTM(units=128))
+    model.add(Dense(1, activation = 'sigmoid'))
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
+    print("model summary:\n")
+    print(model.summary())
+    labels = df['binary label']
+    X_train, X_test, y_train, y_test = train_test_split(X, labels)
+    model.fit(X_train, y_train, validation_split=0.3, epochs=6)
+    #TESTING
+    y_pred = (model.predict(X_test)>=0.5).astype(int)
+    accuracy_score(y_test, y_pred)
+    print(classification_report(y_test, y_pred))
+#======================================================================================================
+
+
+if __name__ == '__main__':
+    #clean_combined_eng_datasets()  # uncomment when datasets change, or when cleaning process changes
+    # training_combined_eng_datasets()  #uncomment when we want to redo training
+    # *************** MANUAL CHECKS **********************
+    # svm_model = 'combined_trained_model.pkl'
+    # vectorizer = 'tfidf_vectorizer.pkl'
+    # grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "', svm_model, vectorizer)
+    # grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", svm_model, vectorizer)
+    # grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה", svm_model, vectorizer)
+    # grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה", svm_model, vectorizer)
+    # grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)", svm_model, vectorizer)
+    # grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak", svm_model, vectorizer)
+    # grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.", svm_model, vectorizer)
+    # grade_single_post("קורונה גורמת לתחלואה קשה ותמותה גם בקרב צעירים שאינם מחוסנים 📈 עד גיל 50 - מי שלא התחסנו כלל, מהווים 69% מהחולים קשה ו-96% מהנפטרים (בין התאריכים 1.6 ל-4.9). אלו העובדות. חיסון ראשון, שני או שלישי - פשוט צאו להתחסן!", svm_model, vectorizer)
+    # grade_single_post("קורונה זו לא רק 'מחלה של מבוגרים'! גם צעירים שלא מתחסנים חושפים עצמם למחלה קשה. 85% ממאושפזי הקורונה אשר נמצאים כעת במצב קריטי ומחוברים למכשיר אקמו - אינם מחוסנים. גילם הממוצע - 47. קורונה עלולה להיות מחלה קשה למבוגרים ולצעירים אבל בעיקר ללא מחוסנים. צאו להתחסן.", svm_model, vectorizer)
+    # grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ", svm_model, vectorizer)
+
+    #***********HEB DATA!******************************
+    training_heb('NEW_manual_data_our_tags - NEW_manual_data.csv')
 
 """
 optional classifiers to add:
