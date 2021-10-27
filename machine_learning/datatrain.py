@@ -32,9 +32,9 @@ import gensim
 #pips: pip install tensorflow --user
 #       pip install gensim
 
-def grade_single_post(post, svm_model, vectorizer):
+def grade_single_post(post, model, vectorizer):
     #load trained model and fitted vectorizer
-    svm_model = joblib.load(svm_model)
+    model = joblib.load(model)
     vectorizer = joblib.load(vectorizer)
     #translate post to english, regardless of source language
     translator = GoogleTranslator()
@@ -42,7 +42,7 @@ def grade_single_post(post, svm_model, vectorizer):
     readied_post = readify_text(translated_post)
     #vectorize and predict fakeness
     vectorized_post = vectorizer.transform([readied_post])
-    y_pred = svm_model.predict(vectorized_post)
+    y_pred = model.predict(vectorized_post)
     #print result
     print("post:\n" + post + "\ntranslated post:\n" + translated_post + "\nreadied post:\n"+readied_post+"\ngrade: " + str(y_pred))
     return y_pred
@@ -277,7 +277,7 @@ def training_heb(filename):
     clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
     df = pd.read_csv(clean_filename)
     df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
-    X = df['keywords'] #TODO check this is a list of lists
+    X = df['keywords']
     DIM = 100
     w2v_model = gensim.models.Word2Vec(sentences=X,  vector_size=DIM, window=10, min_count=1)
     print(len(w2v_model.wv)) #this is for us, see how many words came from the model
@@ -292,7 +292,7 @@ def training_heb(filename):
     vocab_size = len(tokenizer.word_index) + 1
     embedding_vectors = get_weight_matrix(w2v_model, vocab_size, tokenizer.word_index, DIM=DIM)
     model = Sequential()
-    model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=True))
+    model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=False))
     model.add(LSTM(units=128))
     model.add(Dense(1, activation = 'sigmoid'))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
