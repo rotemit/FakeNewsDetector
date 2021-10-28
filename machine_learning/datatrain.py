@@ -293,18 +293,26 @@ def training_heb(filename):
     embedding_vectors = get_weight_matrix(w2v_model, vocab_size, tokenizer.word_index, DIM=DIM)
     model = Sequential()
     model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=False))
-    model.add(LSTM(units=128))
+    model.add(LSTM(units=32))
     model.add(Dense(1, activation = 'sigmoid'))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
     print("model summary:\n")
     print(model.summary())
     labels = df['binary label']
-    X_train, X_test, y_train, y_test = train_test_split(X, labels)
+    X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels)
     model.fit(X_train, y_train, validation_split=0.3, epochs=6)
     #TESTING
     y_pred = (model.predict(X_test)>=0.5).astype(int)
     print(accuracy_score(y_test, y_pred))
     print(classification_report(y_test, y_pred))
+
+    #confusion matrix
+    conf_matrix = confusion_matrix(y_true=y_test, y_pred=y_pred)
+    fig, ax = plt.subplots(figsize=(7.5, 7.5))
+    ax.matshow(conf_matrix)
+    plt.xlabel('Predictions')
+    plt.ylabel('Actuals')
+    plt.show()
 #======================================================================================================
 
 
