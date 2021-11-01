@@ -36,13 +36,16 @@ def get_keyWords(text):
     r = requests.post(url, data=_json.encode('utf-8'), headers={'Content-type': 'application/json; charset=utf-8'})
     #check each word in text. if it's in a key position, get lemma
     lemmas = []
-    tokens = r.json()['md_lattice']
+    # tokens = r.json()['md_lattice']
+    tokens = r.json()['dep_tree']
+    #from checking only the word לא has neg dependency part, so it only add it
     for i in tokens:
-        if tokens[i].get('pos') in key_pos_tags:
+        # if tokens[i].get('pos') in key_pos_tags:
+        if tokens[i].get('pos') in key_pos_tags or "neg" in tokens[i].get('dependency_part'): #so we could add the word לא
             lemmas.append(tokens[i].get('lemma'))
     print(lemmas)
     time.sleep(3)
     return lemmas
 
 if __name__ == '__main__':
-    get_keyWords('אלו הרבה מילים שאני רושמת כאן לדוגמא הזו')
+    get_keyWords('אלו הרבה מילים שאני רושמת כאן לדוגמא הזו, אבל אני לא מבינה ואינני מבינה גם כן')
