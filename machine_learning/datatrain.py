@@ -5,7 +5,7 @@ import itertools
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix,classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from machine_learning.stop_words import stop_words
 from yap_server import get_keyWords
 from sklearn import svm
@@ -27,10 +27,18 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Embedding, LSTM, Conv1D, MaxPool1D
+from tensorflow.keras.optimizers import Adam
 import gensim
+
+from transformers import BertModel, BertTokenizerFast
+import torch.nn as nn
+# from pytorch_pretrained_bert import BertTokenizer, BertModel
+import torch
 
 #pips: pip install tensorflow --user
 #       pip install gensim
+#       pip install transformers    #for AlephBERT
+#       pip install torch torchvision torchaudio    #for AlephBERT
 
 def grade_single_post(post, model, vectorizer):
     #load trained model and fitted vectorizer
@@ -272,47 +280,165 @@ def get_weight_matrix(model, vocab_size, vocab, DIM=100):
         weight_matrix[i] = model.wv[word]
     return weight_matrix
 
-def training_heb(filename):
-    # csv_cleaner(filename, heb=True)
-    clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
-    df = pd.read_csv(clean_filename)
+class BertBinaryClassifier(nn.Module):
+    def __init__(self, dropout=0.1):
+        super(BertBinaryClassifier, self).__init__()
+        self.bert = BertModel.from_pretrained('onlplab/alephbert-base') #our BERT is AlephBERT
+        self.dropout = nn.Dropout(dropout)
+        self.linear = nn.Linear(768, 1)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, tokens, masks=None):
+        pooled_output = self.bert(tokens, attention_mask=masks)['pooler_output']
+        dropout_output = self.dropout(pooled_output)
+        linear_output = self.linear(dropout_output)
+        proba = self.sigmoid(linear_output)
+        return proba
+
+def training_heb(filename, model_filename, tokenizer_filename):
+    df = pd.read_csv(filename)
+
+
+    #==============================W2V==============================================================
+    # df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
+    # X = df['keywords']  # X is a list of keyword-lists
+    # DIM = 100
+    # w2v_model = gensim.models.Word2Vec(sentences=X,  vector_size=DIM, window=10, min_count=1)
+    # print(len(w2v_model.wv)) #this is for us, see how many words came from the model
+    # #TRAINING
+    # tokenizer = Tokenizer()
+    # tokenizer.fit_on_texts(X)           #fit tokenizer for our vocabulary (taken from keywords)
+    # X = tokenizer.texts_to_sequences(X) #convert vectors to sequences
+    # maxlen = 50 #after checking the histogram of the length of all items in X
+    # X = pad_sequences(X, maxlen=maxlen)
+    # vocab_size = len(tokenizer.word_index) + 1
+    # embedding_vectors = get_weight_matrix(w2v_model, vocab_size, tokenizer.word_index, DIM=DIM)
+    # model = Sequential()
+    # model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=False))
+    # model.add(LSTM(units=8, activation = 'sigmoid', kernel_regularizer='l2'))
+    # model.add(Dense(1, activation = 'sigmoid'))
+    # opt = Adam(learning_rate=0.001)
+    # model.compile(loss='binary_crossentropy', optimizer=opt)
+    # print("model summary:\n")
+    # print(model.summary())
+    # labels = df['binary label']
+    # X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels)
+    # model.fit(X_train, y_train, validation_split=0.3, epochs=32)
+    # #TESTING
+    # y_pred = (model.predict(X_test)>=0.5).astype(int)
+    # print(accuracy_score(y_test, y_pred))
+    # print(classification_report(y_test, y_pred))
+    #==============================W2V==============================================================
+
+
+    #================ALEPHBERT===========================================================
+    BATCH_SIZE = 1
+    EPOCHS = 1
+    LEARNING_RATE = 0.001
+
     df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
     X = df['keywords']
-    DIM = 100
-    w2v_model = gensim.models.Word2Vec(sentences=X,  vector_size=DIM, window=10, min_count=1)
-    print(len(w2v_model.wv)) #this is for us, see how many words came from the model
-    #TRAINING
-    tokenizer = Tokenizer()
-    tokenizer.fit_on_texts(X)
-    X = tokenizer.texts_to_sequences(X) #convert vectors to sequences
-    print('Word Indexes:')
-    print(tokenizer.word_index)
-    maxlen = 50 #after checking the histogram of the length of all items in X
-    X = pad_sequences(X, maxlen=maxlen)
-    vocab_size = len(tokenizer.word_index) + 1
-    embedding_vectors = get_weight_matrix(w2v_model, vocab_size, tokenizer.word_index, DIM=DIM)
-    model = Sequential()
-    model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=False))
-    model.add(LSTM(units=32))
-    model.add(Dense(1, activation = 'sigmoid'))
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
-    print("model summary:\n")
-    print(model.summary())
+    # X = df['clean_text'] #commented out when trying keywords
     labels = df['binary label']
+    alephbert_tokenizer = BertTokenizerFast.from_pretrained('onlplab/alephbert-base')
+    # alephbert = BertModel.from_pretrained('onlplab/alephbert-base')
+    #
+    # # if not finetuning - disable dropout
+    # alephbert.eval()
     X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels)
-    model.fit(X_train, y_train, validation_split=0.3, epochs=6)
-    #TESTING
-    y_pred = (model.predict(X_test)>=0.5).astype(int)
-    print(accuracy_score(y_test, y_pred))
-    print(classification_report(y_test, y_pred))
+
+    y_train = np.array(y_train)
+    y_test = np.array(y_test)
+
+    # train_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_train))
+    # test_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_test))
+    train_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_train)) #when using keywords
+    test_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_test))   #when using keywords
+    train_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, train_tokens))
+    test_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, test_tokens))
+
+    # X = map(alephbert_tokenizer.convert_tokens_to_ids, X)   #we want X to be a list of ids-strings
+    maxlen = 250         #250 is YAP's limit, 512 is BERT's limit
+    train_tokens_ids = pad_sequences(train_tokens_ids, maxlen=512)
+    test_tokens_ids = pad_sequences(test_tokens_ids, maxlen=512)
+#fa
+    #generate training and testing masks
+    train_masks = [[float(i > 0) for i in ii] for ii in train_tokens_ids]
+    test_masks = [[float(i > 0) for i in ii] for ii in test_tokens_ids]
+    train_masks_tensor = torch.tensor(train_masks)
+    test_masks_tensor = torch.tensor(test_masks)
+    #Generate token tensors for training and testing
+    train_tokens_tensor = torch.tensor(train_tokens_ids)
+    train_y_tensor = torch.tensor(y_train.reshape(-1, 1)).float()
+    test_tokens_tensor = torch.tensor(test_tokens_ids)
+    test_y_tensor = torch.tensor(y_test.reshape(-1, 1)).float()
+    #prepare our data loaders
+    train_dataset = torch.utils.data.TensorDataset(train_tokens_tensor, train_masks_tensor, train_y_tensor)
+    train_sampler = torch.utils.data.RandomSampler(train_dataset)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, batch_size=BATCH_SIZE)
+    test_dataset = torch.utils.data.TensorDataset(test_tokens_tensor, test_masks_tensor, test_y_tensor)
+    test_sampler = torch.utils.data.SequentialSampler(test_dataset)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, sampler=test_sampler, batch_size=BATCH_SIZE)
+
+    # alephbert = BertModel.from_pretrained('onlplab/alephbert-base')
+
+    # if not finetuning - disable dropout
+
+    bert_clf = BertBinaryClassifier()
+    optimizer = torch.optim.Adam(bert_clf.parameters(), lr=LEARNING_RATE)
+
+    for epoch_num in range(EPOCHS):
+        bert_clf.train()
+        train_loss = 0
+        for step_num, batch_data in enumerate(train_dataloader):
+            token_ids, masks, labels = tuple(t for t in batch_data)
+            probas = bert_clf(token_ids, masks)
+            loss_func = nn.BCELoss()
+            batch_loss = loss_func(probas, labels)
+            train_loss += batch_loss.item()
+            bert_clf.zero_grad()
+            batch_loss.backward()
+            optimizer.step()
+            print('Epoch: ', epoch_num + 1)
+            print("\r" + "{0}/{1} loss: {2} ".format(step_num, len(X_train) / BATCH_SIZE, train_loss / (step_num + 1)))
+
+    #evaluate
+    bert_clf.eval()
+    bert_predicted = []
+    all_logits = []
+    with torch.no_grad():
+        for step_num, batch_data in enumerate(test_dataloader):
+            token_ids, masks, labels = tuple(t for t in batch_data)
+            logits = bert_clf(token_ids, masks)
+            loss_func = nn.BCELoss()
+            loss = loss_func(logits, labels)
+            numpy_logits = logits.cpu().detach().numpy()
+
+            bert_predicted += list(numpy_logits[:, 0] > 0.5)
+            all_logits += list(numpy_logits[:, 0])
+
+
+    # #save trained model
+    # joblib.dump(bert_clf, model_filename)
+    #
+    # #save tokenizer
+    # joblib.dump(alephbert_tokenizer, tokenizer_filename)
+
+    print(classification_report(y_test, bert_predicted))
+    #================ALEPHBERT===========================================================
+
+
+def bert_predict(post, model_filename, tokenizer_filename):
+    model = joblib.load(model_filename)
+    vectorizer = joblib.load(tokenizer_filename)
 
     #confusion matrix
-    conf_matrix = confusion_matrix(y_true=y_test, y_pred=y_pred)
-    fig, ax = plt.subplots(figsize=(7.5, 7.5))
-    ax.matshow(conf_matrix)
-    plt.xlabel('Predictions')
-    plt.ylabel('Actuals')
-    plt.show()
+    # conf_matrix = confusion_matrix(y_true=y_test, y_pred=y_pred)
+    # fig, ax = plt.subplots(figsize=(7.5, 7.5))
+    # ax.matshow(conf_matrix)
+    # plt.xlabel('Predictions')
+    # plt.ylabel('Actuals')
+    # plt.show()
 #======================================================================================================
 
 
@@ -334,7 +460,12 @@ if __name__ == '__main__':
     # grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ", svm_model, vectorizer)
 
     #***********HEB DATA!******************************
-    training_heb('NEW_manual_data_our_tags - NEW_manual_data.csv')
+    # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
+    # csv_cleaner(filename, heb=True)
+    filename = 'dataset_for_code_testing - Sheet1.csv'
+    # csv_cleaner(filename, heb=True)
+    clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
+    training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
 
 """
 optional classifiers to add:
