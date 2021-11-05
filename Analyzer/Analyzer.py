@@ -9,13 +9,9 @@ from modules.AnalysisResult import AnalysisResult
 def analyze_account(account):
     posts = account.posts
     utv_result = UTVAnalysis.analyze_user(account)
-    if len(posts)==0:
-        # result for none posts profile
-        return create_not_enough_posts_result(account.name, "This user doesn't have any posts, hence does not have result.", utv_result)
-
-    elif len(posts)<=5:
+    if len(posts)<=5:
         # result for not enough posts profile
-        return create_not_enough_posts_result(account.name, "This user doesn't have enough posts to derive conclusions from.", utv_result)
+        return create_not_enough_posts_result(account.name, utv_result)
 
     else:
         # perform all analyses
@@ -28,13 +24,9 @@ def analyze_account(account):
 
 def analyze_page(page):
     posts = page.posts
-    utv_result = AnalysisResult("N\A", "No Trust Value result to Facebook Page", 0)
+    utv_result = 1
 
-    if len(posts)==0:
-        # result for none posts page
-        return create_not_enough_posts_result(page.name, "This page doesn't have any posts, hence does not have result.", utv_result)
-
-    elif len(posts)<=5:
+    if len(posts)<=5:
         # result for not enough posts page
         return create_not_enough_posts_result(page.name, "This page doesn't have enough posts to derive conclusions from.", utv_result)
 
@@ -50,28 +42,24 @@ def analyze_page(page):
 
 def analyze_group(group):
     posts = group.posts
-    utv_result = AnalysisResult("N\A", "No Trust Value result to Facebook Group", 0)
+    utv_result =  1
 
-    if len(posts) == 0:
-        # result for none posts group
-        return create_not_enough_posts_result(group.name, "This group doesn't have any posts, hence does not have result.",utv_result)
-
-    elif len(posts) <= 5:
+    if len(posts) <= 5:
         # result for not enough posts group
-        return create_not_enough_posts_result(group.name,"This group doesn't have enough posts to derive conclusions from.", utv_result)
+        return create_not_enough_posts_result(group.name, utv_result)
 
     else:
         # perform all analyses
         sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments(posts)
-        sentimentAnalyzer_result.text = "The group " + sentimentAnalyzer_result.text
+        # sentimentAnalyzer_result.text = "The group " + sentimentAnalyzer_result.text
         machine_learning_result = machineLeaningAnalyzer.grading_posts(posts)
-        machine_learning_result.text = "The group " + machine_learning_result.text
+        # machine_learning_result.text = "The group " + machine_learning_result.text
 
     return ScanResult(group.name, sentimentAnalyzer_result, machine_learning_result, utv_result)
 
 def analyze_post(post_obj):
     post = post_obj.content
-    utv_result = AnalysisResult("N\A", "No Trust Value result to one post", 0)
+    utv_result =  0
     writer_analysis = analyze_account(post_obj.account)
     sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_one_post(post)
     machine_learning_result = machineLeaningAnalyzer.grading_one_post(post)
@@ -81,14 +69,10 @@ def analyze_post(post_obj):
 
 def analyze_comments(comments):
     comments_arr = [comm['Text'] for comm in comments]
-    utv_result = AnalysisResult("N\A", "No Trust Value result to comments", 0)
-    if len(comments_arr) == 0:
-        # result for none posts group
-        return create_not_enough_posts_result("Comments", "This post doesn't have any comments, hence does not have result.",utv_result)
-
-    elif len(comments_arr) <= 5:
+    utv_result =  0
+    if len(comments_arr) <= 5:
         # result for not enough posts group
-        return create_not_enough_posts_result("Comments","This post doesn't have enough posts to derive conclusions from.", utv_result)
+        return create_not_enough_posts_result("Comments", utv_result)
 
     else:
         # perform all analyses
@@ -111,7 +95,6 @@ def analyze_comments(comments):
 
 
 # create result for profile with not enough posts (0 posts or not enough)
-def create_not_enough_posts_result(name, text_result, utv_result):
-    text_analyzers_result = AnalysisResult("N\A", text_result, 0)
-    result = ScanResult(name, text_analyzers_result, text_analyzers_result, utv_result)
+def create_not_enough_posts_result(name, utv_result):
+    result = ScanResult(name, 0, 1, utv_result)
     return result

@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from machine_learning.stop_words import stop_words
-from yap_server import get_keyWords
+from machine_learning.yap_server import get_keyWords
 from sklearn import svm
 from sklearn import metrics
 import joblib

@@ -27,11 +27,11 @@ sid = SentimentIntensityAnalyzer()
 def analyze_one_post(post):
     if post is not None:
         if check_fake_potential(post):
-            return AnalysisResult("100%", "Post probably contains FAKE-NEWS!", 1.0)
+            return 1.0
         else:
-            return AnalysisResult("0%", "Post seems clean from fake-news about Covid 19", 0)
+            return  0
     else:
-        return AnalysisResult("N/A", "No Post", 0)
+        return 0
 
 
 def analyze_sentiments(posts):
@@ -51,7 +51,7 @@ def analyze_sentiments(posts):
     percentResult = str(percent) + "%"
     textResult = convert_potential_fake_rate_to_text(potentialFakeRate)
 
-    return AnalysisResult(percentResult, textResult, potentialFakeRate)
+    return ApotentialFakeRate
 
 # check if a post might be fake by analyzing it's polarity
 # idea:

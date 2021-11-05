@@ -37,7 +37,7 @@ def analyze_user(fb_user):
     # UTVText = utvAnalysisTextResult[UTV]
     UTVText = convert_utv_rate_to_text(UTV)
 
-    return AnalysisResult(UTVPercent, UTVText, UTV)
+    return UTV
 
 def convert_utv_rate_to_text(utvRate):
     for rate in utvAnalysisTextResult.keys():
