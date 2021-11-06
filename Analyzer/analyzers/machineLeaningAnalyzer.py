@@ -11,8 +11,8 @@ def grading_posts(posts):
             # counter += grade_single_post(post, model, vectorizer)[0]
             counter += 1 #TODO: change when ML works
             amount += 1
-    if amount <= 5:
-       return 1.0
+    if amount == 0:
+       return -1
 
     grade = counter / amount
     return grade
