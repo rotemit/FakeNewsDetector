@@ -8,14 +8,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 from modules.Page import Page
 from modules.Group import Group
 from modules.Account import Account
-from modules.Account import account_encoder
 from modules.Post import Post
 import time
 from datetime import date
-from Analyzer.Analyzer import analyze_page
-from Analyzer.Analyzer import analyze_account
-from Analyzer.Analyzer import analyze_group
-from Analyzer.Analyzer import analyze_post
+from Analyzer.Analyzer import analyze_facebook
 import pprint
 import json
 
@@ -33,6 +29,10 @@ name_of_page_2 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8
 about_group_fields = "//div[@class='dwo3fsh8 g5ia77u1 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv q9uorilb kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso l9j0dhe7 i1ao9s8h k4urcfbm']"
 to_english = "/?locale2=en_US"
 
+class json_encoder(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__
+
 """
     initiation of the chrome driver
 """
@@ -44,10 +44,11 @@ def init_sel():
     driver.maximize_window()
     return driver
 
-
+def finish_sel(driver):
+    driver.quit()
 """
     login in into Facebook with the giver email and password
-    we use the "send_keys" method to type the given arguments
+    :return True if logged in succefully, else return False
 """
 def login(driver, email, password):
     driver.get("https://www.facebook.com")
@@ -59,10 +60,15 @@ def login(driver, email, password):
     search_pass.send_keys(password)
     time.sleep(4)
     search_button = redirect_by_xpath(driver, "//div[@class='_6ltg']")
+    if search_button is None:
+        return False
     search_button[0].click()
     time.sleep(3)
+    if "login" in driver.current_url:
+        return False
     global is_logged_in
     is_logged_in = True
+    return True
 
 
 # not sure why we need this, but we'll see
@@ -114,6 +120,8 @@ def redirect_by_xpath(driver, xpath):
             EC.presence_of_all_elements_located((By.XPATH, xpath))
         )
         return element
+    except:
+        return None
     finally:
         print(xpath)
 
@@ -134,23 +142,6 @@ def extract_total_friends(driver):
         return -1
     return int(temp[2])
 
-"""
-    this method extract the attribute of the profile the driver is in,
-    the information if of 5 categories: work, education, current town, home town and status.
-"""
-def extract_profile_attributes(driver):
-    summary = {}
-    fields = ['work', 'education', 'current_town', 'homeTown', 'status']
-    if is_logged_in:
-        elements = redirect_by_xpath(driver, "//div[@class='c9zspvje']")
-    else:
-        elements = redirect_by_xpath(driver, "//div[@class='dati1w0a tu1s4ah4 f7vcsfb0 discj3wi']/div")
-    time.sleep(4)
-    for i in range(len(elements)):
-        temp_data = elements[i].text.partition("\nShared")
-        if temp_data[0] != '' and not temp_data[0].startswith('Add ') and not temp_data[0].startswith('No ') and "Mobile" not in temp_data[0]:
-            summary[fields[i]] = temp_data[0]
-    return summary
 
 """
     this method extract the profile summary of the page it is on,
@@ -158,18 +149,14 @@ def extract_profile_attributes(driver):
 """
 def extract_profile_summary(driver):
     try:
-        summary = extract_profile_attributes(driver)
-    except:
-        summary = None
-    try:
         total_friends = extract_total_friends(driver)
     except:
-        total_friends = None
+        total_friends = 0
     if is_logged_in:
         age_of_account = get_age_of_account(driver)
     else:
-        age_of_account = None
-    return summary, total_friends, age_of_account
+        age_of_account = 0
+    return total_friends, age_of_account
 
 #scraping the "about" page
 def scrap_about(driver):
@@ -186,12 +173,19 @@ def extract_friendship_duration(driver):
     if not is_logged_in:
         return 0
     upper_navigation_bar = redirect_by_xpath(driver, "//div[@class='ku2zlfd4 q3mryazl']/div/div")
+    if upper_navigation_bar is None:
+        return None
     time.sleep(2)
-    upper_navigation_bar[len(upper_navigation_bar) - 1].click()
+    try:
+        upper_navigation_bar[len(upper_navigation_bar) - 1].click()
+    except:
+        return None
     isFriend = redirect(driver, 'See Friendship', False)
     if isFriend is False:
         return 0
     all_common_fields = redirect_by_xpath(driver, friendship_duration_xpath)
+    if all_common_fields is None:
+        return 0
     for field in all_common_fields:
         if field.text.startswith("Your friend since "):
             # strating from the 1st of the month, since not given exact day
@@ -209,6 +203,8 @@ def extract_mutual_friends(driver, is_friend):
     if is_friend:
         all_fields = redirect_by_xpath(driver, friendship_duration_xpath)
         searching_string = "mutual friends"
+        if all_fields is None:
+            return 0
     else:
         all_fields = driver.find_elements_by_xpath("//div[@class='j83agx80 btwxx1t3 bp9cbjyn jifvfom9']")
         searching_string = "Mutual Friends"
@@ -301,24 +297,6 @@ def get_age_of_account(driver):
         return 0
     # we assume the creation if January 1st of the found year
     return calculate_age("1 January " + str(left))
-
-
-"""
-    this method extract the summary info of the page the driver is in
-"""
-def get_page_summary(driver):
-    summary=[]
-    elements = driver.find_elements_by_xpath("//div[@class='lpgh02oy']/div/div")
-    for elem in elements:
-        if "Intro" in elem.text:
-            intro_arr = elem.text.split('\n')
-            summary = [det for det in intro_arr if "Followers" not in det and "Intro" not in det]
-        elif "About" in elem.text:
-            about_arr = elem.text.split('\n')
-            not_list = ["people", "About", "Send Message", "See All"]
-            summary = [det for det in about_arr if "people" not in det and "About" not in det
-                       and "Send Message" not in det and "See All" not in det]
-    return summary
 
 # change from date of type <MonthName DD, YYYY> to <DD MonthName YYYY>
 def reformat_date(date):
@@ -442,23 +420,6 @@ def get_page_numbers(driver):
 
 
 """
-    This method extract the attributes of the group the driver is in
-"""
-def gather_group_attributes(driver):
-    fields = driver.find_elements_by_xpath(about_group_fields)
-    attributes = []
-    i = 0
-    for field in fields:
-        if 'posts' in field.text:
-            return attributes
-        elif 'About' not in field.text and 'History' not in field.text:
-            attributes.insert(i, field.text.replace("\n", ": "))
-            i += 1
-
-    return attributes
-
-
-"""
     This method extract the age of the group the driver is in.
 """
 def get_age_of_group(driver):
@@ -516,7 +477,7 @@ def scrap_account(driver, account_url):
     # if the user is logged in, we simply bring the driver to the given account url
     # if not, we cannot be sure Facebook will be in English,
     # so we add suffix for the url so we get the English version of Facebook
-    account_url = check_url(account_url)
+    # account_url = check_url(account_url)
     if is_logged_in:
         driver.get(account_url)
     else:
@@ -524,24 +485,33 @@ def scrap_account(driver, account_url):
     time.sleep(2)
 
     # getting the name of the given account url
-    name = driver.find_element_by_xpath("//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
-    user_name = name.text
-
-    friendship_duration = 0
-    mutual_friends = 0
-    attributes, total_friends, age_of_account = scrap_about(driver)
+    try:
+        name = driver.find_element_by_xpath("//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
+        user_name = name.text
+    except:
+        return None
 
     # if the user is logged in, then they could be friends,
     # so we will want to find for how long they were friends and how many mutual friends they have.
-    # if the user is not logged in, we consider those arguments to be None.
+    # if the user is not logged in, we consider those arguments to be 0.
+    friendship_duration = 0
+    mutual_friends = 0
     if is_logged_in:
-        friendship_duration = int(extract_friendship_duration(driver))
+        friendship_duration = extract_friendship_duration(driver)
+        if friendship_duration is None:
+            return None
+        friendship_duration = int(friendship_duration)
         mutual_friends = extract_mutual_friends(driver, friendship_duration > 0)
-    else:
-        friendship_duration = None
-        mutual_friends = None
 
-    return Account(user_name, attributes, total_friends, age_of_account, friendship_duration, mutual_friends)
+    if is_logged_in:
+        driver.get(account_url)
+    else:
+        driver.get(account_url + to_english)
+    time.sleep(2)
+
+    total_friends, age_of_account = scrap_about(driver)
+
+    return Account(user_name, total_friends, age_of_account, friendship_duration, mutual_friends)
 
 
 """
@@ -551,7 +521,7 @@ def scrap_page(driver, page_url):
     # if the user is logged in, we simply bring the driver to the given page url
     # if not, we cannot be sure Facebook will be in English,
     # so we add suffix for the url so we get the English version of Facebook
-    page_url = check_url(page_url)
+    # page_url = check_url(page_url)
     if is_logged_in:
         driver.get(page_url)
     else:
@@ -561,7 +531,6 @@ def scrap_page(driver, page_url):
     # initializing the variables
     mutual_friends = None
     page_age = 0
-    attributes = None
     followers = 0
     likes = 0
 
@@ -581,20 +550,21 @@ def scrap_page(driver, page_url):
                 "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
         page_name = name.text.split('\n')[0]
 
+
         # if we did succeed to get a name (either from 1st or 2nd option) we gather all the other attributs.
-        attributes = get_page_summary(driver)
         page_age = get_age_of_page(driver)
         followers, likes, mutual_friends = get_page_numbers(driver)
 
     # if neither of the options worked, then the user isn't logged in, and the page looks diffrent because of it.
     except:
         # we gather all the attributes of the page that we can (not mutual friends).
-        name = driver.find_element_by_xpath("//span[@class='_kao']")
+        try:
+            name = driver.find_element_by_xpath("//span[@class='_kao']")
+        except:
+            return None
         page_name = name.text
         elements = driver.find_elements_by_xpath("//div[@class='_1xnd']/div")
         for elem in elements:
-            if 'About' in elem.text:
-                attributes = elem.text.split('\n')[2:]
             arr = elem.text.split('\n')
             for cell in arr:
                 if 'people like' in cell:
@@ -608,7 +578,9 @@ def scrap_page(driver, page_url):
                     page_age = calculate_age(date, False)
                     break
 
-    return Page(page_name, page_age, attributes, followers, likes, mutual_friends)
+    return Page(page_name, page_age, followers, likes, mutual_friends)
+
+
 
 """
     this method gathers all the information of a given group.
@@ -630,7 +602,6 @@ def scrap_group(driver, group_url):
     name = driver.find_element_by_xpath(name_of_page)
     group_name = name.text.split('\n')[0]
 
-    attributes = gather_group_attributes(driver)
     group_age = get_age_of_group(driver)
     friends_num = get_friends_num_of_group(driver)
 
@@ -638,8 +609,7 @@ def scrap_group(driver, group_url):
     mutuals = None
     if is_logged_in:
         mutuals = get_mutuals_group(driver)
-
-    return Group(group_name, attributes, group_age, friends_num, mutuals)
+    return Group(group_name, group_age, friends_num, mutuals)
 
 
 """
@@ -675,13 +645,11 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
                 # we click it to get the full text of the post.
                 if "See More" in post.text:
                     try:
-                        print("more?")
-                        more = redirect_by_xpath("//div[text()='See More']")
-                        print("more...")
+                        more = redirect_by_xpath("//div[text()='See More']") #TODO: prefection it
                         # more[0].click()
                         # more = post.find_element_by_xpath("//div[text()='See More']")
-                        webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
-                        print("more!")
+                        if more is not None:
+                            webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
                     except:
                         pass
                 # replacing all new-lines in post to spaces
@@ -697,13 +665,11 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
             # we click it to get the full text of the post.
             if "See More" in post.text:
                 try:
-                    print("more?")
-                    more = redirect_by_xpath("//div[text()='See More']")
-                    print("more...")
+                    more = redirect_by_xpath("//div[text()='See More']") #TODO: prefection it
                     # more[0].click()
                     # more = post.find_element_by_xpath("//div[text()='See More']")
-                    webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
-                    print("more!")
+                    if more is not None:
+                        webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
                 except:
                     pass
             # replacing all new-lines in post to spaces
@@ -724,7 +690,6 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
     num - the number of posts to extract
 """
 def scrap_posts(driver, account_url, num):
-    print("possssstttt")
     driver.get(account_url)
     time.sleep(2)
     arr = []
@@ -737,11 +702,10 @@ def scrap_posts(driver, account_url, num):
 
     return arr
 
-def scrap_comments(driver):
+def scrap_comments(driver, num=0):
     comments = []
     post_comments = driver.find_elements_by_xpath("//div[@class='cwj9ozl2 tvmbv18p']/ul/li")
     arr_index = 0
-
     for i, comm in enumerate(post_comments):
         print(comm.text)
         lines = comm.text.split('\n')
@@ -780,6 +744,8 @@ def scrap_comments(driver):
                 if(len(lines) > j+1):
                     writer = lines[j+1]
                     start_text = j+2
+        if arr_index >= num:
+            break
 
     return comments
 
@@ -787,18 +753,18 @@ def click_on_all(driver, element_xpath):
     elements = driver.find_elements_by_xpath(element_xpath)
     print(len(elements))
     for elem in elements:
+        # try:
+        #     elem.click()
+        # except:
         try:
-            elem.click()
+            webdriver.ActionChains(driver).move_to_element(elem).click(elem).perform()
         except:
-            try:
-                webdriver.ActionChains(driver).move_to_element(elem).click(elem).perform()
-            except:
-                print("couldn't click on element with text: " + elem.text)
+            print("couldn't click on element")
         time.sleep(1)
     return len(elements)
 
 
-def scrap_one_post(driver, post_url, writer_posts_num):
+def scrap_one_post(driver, post_url, comments):
     post_url = check_url(post_url)
     if is_logged_in:
         driver.get(post_url)
@@ -866,15 +832,15 @@ def scrap_one_post(driver, post_url, writer_posts_num):
     # not_wanted_url = driver.current_url
     # while "groups" in driver.current_url:
     writer_page_btn = driver.find_elements_by_xpath("//span[@class='nc684nl6']")
-    counter = 0
-    for btn in writer_page_btn:
-        if writer in btn.text:
-            counter += 1
-            if counter > 1:
-                webdriver.ActionChains(driver).move_to_element(btn).click(btn).perform()
-                time.sleep(3)
-                if "groups" not in driver.current_url:
-                    break
+    # counter = 0
+    # for btn in writer_page_btn:
+    #     if writer in btn.text:
+    #         counter += 1
+    #         if counter > 1:
+    #             webdriver.ActionChains(driver).move_to_element(btn).click(btn).perform()
+    #             time.sleep(3)
+    #             if "groups" not in driver.current_url:
+    #                 break
             # #
 
         # print(str(i) + ": " + btn.text)
@@ -884,102 +850,86 @@ def scrap_one_post(driver, post_url, writer_posts_num):
         # time.sleep(3)
     url_account = driver.current_url
     print(url_account)
+    url_arr = url_account.split('/')
+    myUser = ""
+    for i, cell in enumerate(url_arr):
+        if "user" in cell:
+            myUser = "/".join(url_arr[i+1:])
+            break
+    print(myUser)
+    url_account = "https://www.facebook.com/" + myUser
+    print(url_account)
+    url_account = check_url(url_account)
     account = scrap_account(driver, url_account)
-    if writer_posts_num > 0:
-        posts = scrap_posts(driver, url_account, writer_posts_num)
-        account.set_posts(posts)
+    print(account)
     return Post(writer, content, comments, account)
 
 
-"""
-    this is our main function to call if we want to scrap anything from Facebook.
-    list of possible arguments:
-    url_account: the url of the account we want to get information of - if logged in, also get trust value
-    url_page: the url of the page we want to get information of.
-    url_group: the url of the group we want to get information of.
-    url_post: the url of a uniq post, gets it's writer's name, content, and it's comments
-    onlyPosts: boolean if we only want the posts of the given url, only works for one url, return immediately the posts array.
-    posts: number of posts we want to extract from the given url(s).
-    loging_in: boolean argument if the user wants to log in or not - notice, if decided not to, then some of the info will not be given.
-    the next parameters are only used if loging_in=True:
-    user_url: the url of the user (its main profile) - only needed to extract trust value from account right now.
-    user_mail: the mail the user uses to enter its Facebook account.
-    user_password: the password the user uses to enter its Facebook account.
-"""
-def scrap_facebook(url_account=None, url_page=None, url_group=None, url_post=None, onlyPosts=False, posts=0, loging_in=False, user_mail=None, user_password=None):
-    driver = init_sel()
+def scrap_url(driver, url, posts=0, loging_in=False):
+    global is_logged_in
+    is_logged_in = loging_in
+    url = check_url(url)
 
-    if loging_in:
-        login(driver, user_mail, user_password)
+    # scarpping a post
+    if "posts" in url or "permalink" in url:
+        one_post = scrap_one_post(driver, url, posts)
+        if one_post is None:
+            return None
+        return one_post
 
-    if url_post is not None:
-        post = scrap_one_post(driver, url_post, posts)
-        # print(post)
-        with open('MyPost.json', 'w', encoding='UTF8') as outfile:
-            json.dump(post, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
-        # print(ananlyze_post(post))
-        driver.quit()
-        return post
-
-
-    if url_account is not None:
-        if not onlyPosts:
-            account = scrap_account(driver, url_account)
-        if posts > 0:
-            posts = scrap_posts(driver, url_account, posts)
-            if onlyPosts:
-                return posts
-            account.set_posts(posts)
-        with open('MyAccount.json', 'w', encoding='UTF8') as outfile:
-            json.dump(account, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
-
-        print(account)
-        # print(analyze_user(account))
-        driver.quit()
-        return account
-
-    if url_page is not None:
-        if not onlyPosts:
-            page = scrap_page(driver, url_page)
-        if posts > 0:
-            posts = scrap_posts(driver, url_page, posts)
-            if onlyPosts:
-                return posts
-            page.set_posts(posts)
-        with open('MyPage.json', 'w', encoding='UTF8') as outfile:
-            json.dump(page, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
-        print(page)
-        # print(analyze_user(page))
-        driver.quit()
-        return page
-
-    if url_group is not None:
-        if not onlyPosts:
-            group = scrap_group(driver, url_group)
-        if posts > 0:
-            posts = scrap_posts(driver, url_group, posts)
-            if onlyPosts:
-                return posts
-            group.set_posts(posts)
-        with open('MyGroup.json', 'w', encoding='UTF8') as outfile:
-            json.dump(group, outfile, indent=4, cls=account_encoder, ensure_ascii=False)
-        print(group)
-        # print(analyze_user(group))
-        driver.quit()
+    # scarpping a group
+    elif "groups" in url:
+        group = scrap_group(driver, url)
+        if group is None:
+            return None
+        group_posts = scrap_posts(driver, url, posts)
+        group.set_posts(group_posts)
         return group
 
-    driver.quit()
+    else:
+        account = scrap_account(driver, url) #trying to scrap account
+        # scarpping a page
+        if account is None:
+            print("PPPAAAAGGGGGEEEE")
+            page = scrap_page(driver, url)
+            if page is None:
+                return None
+            else:
+                page_posts = scrap_posts(driver, url, posts)
+                page.set_posts(page_posts)
+                return page
 
-def print_dict(dictio):
-    for key, value in vars(dictio):
-        print(str(key)+':')
-        print(str(value))
-        print('\n')
+        # scarpping an account
+        else:
+            account_posts = scrap_posts(driver, url, posts)
+            account.set_posts(account_posts)
+            return account
+
+
+
+
 
 if __name__ == '__main__':
+
+    driver = init_sel() #to init the driver
+    if not login(driver, "ofrishani10@walla.com", "Ls5035"):
+        login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
+
+    account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
+
+    finish_sel(driver) #to finish with the driver
+
+    analyzed = analyze_facebook(account) #to analyze the something; this case the account
+    print(vars(analyzed))
+
+    # account = scrap_url(driver, "https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True)
+    # group = scrap_url(driver, "https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True)
+    # post = scrap_url(driver, "https://www.facebook.com/groups/336084457286212/permalink/648330709394917", posts=20, loging_in=True)
+    # page = scrap_url(driver, "https://www.facebook.com/TheShadow69", posts=20, loging_in=True)
+    # page = scrap_url(driver, "https://www.facebook.com/Conspiralla/", posts=20, loging_in=True)
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # account = scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    account = scrap_facebook(url_account="https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # account = scrap_facebook(url_account="https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # page = scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # posts = scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=20, onlyPosts=True, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
@@ -988,14 +938,17 @@ if __name__ == '__main__':
     # group = scrap_facebook(url_group="https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # page = scrap_facebook(url_page="https://www.facebook.com/Conspiralla/", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # print(posts)
-    # dicto = analyze_post(post)
+    #
+    # if analyzed is not None:
+    #     print(vars(analyzed))
+    # else:
+    #     print("somhow its None")
     # print_dict(analyze_account(account))
     # print(analyze_page(page))
-    print(vars(analyze_account(account)))
+
     # print(analyze_group(group))
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")
     # "https://www.facebook.com/groups/bathefer1")
     # post-link: "https://www.facebook.com/permalink.php?story_fbid=1510260152643112&id=100009774256825")
     # "https://www.facebook.com/Gilad.Agam"
-    # group: "https://www.facebook.com/Conspiralla/"

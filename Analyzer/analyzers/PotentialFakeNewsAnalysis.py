@@ -1,38 +1,7 @@
 import re
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from modules.AnalysisResult import AnalysisResult
 from deep_translator import GoogleTranslator
 sid = SentimentIntensityAnalyzer()
-
-# def ananlyze_comments(post):
-#     potentialFakeCommentsNum = 0
-#     commentsNum = len(post.comments)
-#     if commentsNum == 0:
-#         return AnalysisResult("N/A", "No comments", 0)
-#     for comm in post.comments:
-#         if comm['Text'] is not None:
-#             if check_fake_potential(comm['Text']):
-#                 potentialFakeCommentsNum += 1
-#
-#     # calculate rate
-#     potentialFakeRate = potentialFakeCommentsNum / commentsNum
-#
-#     # convert to analysis result
-#     percent = int((potentialFakeRate * 100) // 1)
-#     percentResult = str(percent) + "%"
-#     textResult = convert_potential_fake_rate_to_text(potentialFakeRate)
-#     return AnalysisResult(percentResult, textResult, potentialFakeRate)
-
-
-def analyze_one_post(post):
-    if post is not None:
-        if check_fake_potential(post):
-            return 1.0
-        else:
-            return  0
-    else:
-        return 0
-
 
 def analyze_sentiments(posts):
     potentialFakePostsNum = 0
@@ -45,12 +14,6 @@ def analyze_sentiments(posts):
 
     # calculate rate
     potentialFakeRate = potentialFakePostsNum / postsNum
-
-    #convert to analysis result
-    percent = int((potentialFakeRate*100) // 1)
-    percentResult = str(percent) + "%"
-    textResult = convert_potential_fake_rate_to_text(potentialFakeRate)
-
     return potentialFakeRate
 
 # check if a post might be fake by analyzing it's polarity
@@ -70,6 +33,8 @@ def check_fake_potential(post):
     englishText = GoogleTranslator(source='he', target='en').translate(post)
     print(englishText)
     # auto analysis by nltk
+    if englishText is None:
+        return False
     sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
     print(sentimentDict)
     # check if sentiments indicates high fake potential
@@ -114,23 +79,3 @@ def analyze_manualy_sentiments_in_post(englishText):
     else:
         sentimentCalc = countNeg / (countPos + countNeg) * (-1)
     return sentimentCalc
-
-
-def convert_potential_fake_rate_to_text(potentialFakeRate):
-    for rate in potentialFakeNewsAnalysisTextResult.keys():
-        if potentialFakeRate <= rate:
-            return potentialFakeNewsAnalysisTextResult[rate]
-    return ""
-
-# dictinary of <offensive_rate, text_result>.
-# used to convert offensive rate to text result.
-# important! keep the rates going up from 0 to 1.
-potentialFakeNewsAnalysisTextResult = {
-    0.0 : "is clean of potential fake news!",
-    0.1 : "is ok.",
-    0.2 : "rarely post potential fake news.",
-    0.4 : "often post potential fake news, pay attention!",
-    0.6 : "is problematic, most posts are potential fake news.",
-    0.8 : "is problematic, the vast majority of posts are potential fake news!",
-    1 : "is DANGEROUS! All posts are potential fake news!"
-}

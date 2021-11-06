@@ -1,22 +1,23 @@
-from modules.AnalysisResult import AnalysisResult
+from modules.Account import Account
 
 # UTV = user trust level
 # aua = age of user account, fd = friendship duration, tf = total friends, mf = mutual friends
 # all computations are according to Nadav's article
 def analyze_user(fb_user):
+    if not isinstance(fb_user, Account):
+        return -1
     aua = fb_user.age
     fd = fb_user.friendship_duration
     tf = fb_user.total_friends
     mf = fb_user.mutual_friends
-    # if isinstance(aua, str):
-    #     aua = int(aua)
+
     if aua == 0 or fd == 0 or tf ==0 or mf == 0:
-        return AnalysisResult("N\A", "Can't calculate user's trust level", 0)
+        return -1
         
     # Thresholds
-    T_aua = 2
-    T_fd = 1.5
-    T_tf = 245
+    T_aua = 244.34
+    T_fd = 17.12
+    T_tf = 23.82
     T_mf = 37
 
     # User credibility attributes
@@ -31,25 +32,4 @@ def analyze_user(fb_user):
 
     # UTV = (U*|U| + C*|C|) / |U + C|
     UTV = (userCredibility*2 + connectionStrength*2)/4
-    
-    # Convert to analysis result
-    UTVPercent = str(UTV*100) + "%"
-    # UTVText = utvAnalysisTextResult[UTV]
-    UTVText = convert_utv_rate_to_text(UTV)
-
     return UTV
-
-def convert_utv_rate_to_text(utvRate):
-    for rate in utvAnalysisTextResult.keys():
-        if utvRate <= rate:
-            return utvAnalysisTextResult[rate]
-    return ""
-
-utvAnalysisTextResult = {
-    0.0: "The account is DANGEROUS! DO NOT TRUST THEM!",
-    0.4: "The Account is problematic! very low reliability rank",
-    0.6: "The account is not very reliable, you should pay attention",
-    0.8: "The account is ok.",
-    0.9: "The account is reliable.",
-    1: "The account is 100% reliable!"
-}

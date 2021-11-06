@@ -3,7 +3,7 @@
 Hello! Welcome to our FakeNewsDetector, the ultimate tool for Fake News Detection in Hebrew politics on Facebook,
 created as a final project for our Bachelor's degree in Computer Science.
 
-In order to run our project, you will need to create a virtual environmentto do so, write the following command inside the project folder:
+In order to run our project, you will need to create a virtual enviorment to do so, write the following command inside the project folder:
 py -3 -m venv <enviorment name>
 
 Now you will need to activate it:
