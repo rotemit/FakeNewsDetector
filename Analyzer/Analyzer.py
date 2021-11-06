@@ -16,15 +16,15 @@ def analyze_account(account):
     else:
         # perform all analyses
         sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments(posts)
-        sentimentAnalyzer_result.text = "The account " + sentimentAnalyzer_result.text
+        # sentimentAnalyzer_result.text = "The account " + sentimentAnalyzer_result.text
         machine_learning_result = machineLeaningAnalyzer.grading_posts(posts)
-        machine_learning_result.text = "The account " + machine_learning_result.text
+        # machine_learning_result.text = "The account " + machine_learning_result.text
 
     return ScanResult(account.name, sentimentAnalyzer_result, machine_learning_result, utv_result)
 
 def analyze_page(page):
     posts = page.posts
-    utv_result = 1
+    utv_result = 1.0
 
     if len(posts)<=5:
         # result for not enough posts page
@@ -42,7 +42,7 @@ def analyze_page(page):
 
 def analyze_group(group):
     posts = group.posts
-    utv_result =  1
+    utv_result =  1.0
 
     if len(posts) <= 5:
         # result for not enough posts group
@@ -59,7 +59,7 @@ def analyze_group(group):
 
 def analyze_post(post_obj):
     post = post_obj.content
-    utv_result =  0
+    utv_result =  0.0
     writer_analysis = analyze_account(post_obj.account)
     sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_one_post(post)
     machine_learning_result = machineLeaningAnalyzer.grading_one_post(post)
@@ -69,7 +69,7 @@ def analyze_post(post_obj):
 
 def analyze_comments(comments):
     comments_arr = [comm['Text'] for comm in comments]
-    utv_result =  0
+    utv_result =  0.0
     if len(comments_arr) <= 5:
         # result for not enough posts group
         return create_not_enough_posts_result("Comments", utv_result)
@@ -96,5 +96,5 @@ def analyze_comments(comments):
 
 # create result for profile with not enough posts (0 posts or not enough)
 def create_not_enough_posts_result(name, utv_result):
-    result = ScanResult(name, 0, 1, utv_result)
+    result = ScanResult(name, 0.0, 1.0, utv_result)
     return result

@@ -724,6 +724,7 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
     num - the number of posts to extract
 """
 def scrap_posts(driver, account_url, num):
+    print("possssstttt")
     driver.get(account_url)
     time.sleep(2)
     arr = []
@@ -977,8 +978,8 @@ def print_dict(dictio):
 
 if __name__ == '__main__':
     # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
-    account = scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # account = scrap_facebook(url_account="https://www.facebook.com/danny.bartal.3", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    # account = scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    account = scrap_facebook(url_account="https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
     # page = scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # posts = scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=20, onlyPosts=True, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
@@ -988,9 +989,9 @@ if __name__ == '__main__':
     # page = scrap_facebook(url_page="https://www.facebook.com/Conspiralla/", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
     # print(posts)
     # dicto = analyze_post(post)
-    print_dict(analyze_account(account))
+    # print_dict(analyze_account(account))
     # print(analyze_page(page))
-    # vars(analyze_account(account))
+    print(vars(analyze_account(account)))
     # print(analyze_group(group))
     # page: "https://www.facebook.com/TheShadow69")
     # page: "https://www.facebook.com/hapshuta")

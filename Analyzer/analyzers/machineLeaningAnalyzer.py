@@ -10,10 +10,11 @@ def grading_posts(posts):
     vectorizer = "machine_learning/tfidf_vectorizer.pkl"
     for post in posts:
         if(check_covid_relateness(post) > COVID_PERCENT_ABOVE):
-            counter += grade_single_post(post, model, vectorizer)[0]
+            # counter += grade_single_post(post, model, vectorizer)[0]
+            counter += 1
             amount += 1
     if amount <= 5:
-       return 1
+       return 1.0
 
     grade = counter / amount
     percent = int((grade * 100) // 1)

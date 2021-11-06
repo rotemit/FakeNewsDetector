@@ -51,7 +51,7 @@ def analyze_sentiments(posts):
     percentResult = str(percent) + "%"
     textResult = convert_potential_fake_rate_to_text(potentialFakeRate)
 
-    return ApotentialFakeRate
+    return potentialFakeRate
 
 # check if a post might be fake by analyzing it's polarity
 # idea:
