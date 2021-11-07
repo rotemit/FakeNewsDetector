@@ -5,7 +5,8 @@ from flask import Flask, request
 from flask_cors import CORS
 
 from machine_learning.scrap_posts import scrap_posts
-from Scraper.scrapper import scrap_facebook
+from Scraper.scrapper import scrap_url, init_sel, login
+from Analyzer.Analyzer import analyze_facebook
 import pandas as pd
 
 
@@ -43,12 +44,17 @@ def get_posts(name):
     return True
 
 def scrap_post(text):
+    driver = init_sel() #to init the driver
+    if not login(driver, "ofrishani10@walla.com", "Ls5035"):
+        login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
+
     print("start")
     global post
-    post = scrap_facebook(url_post=text, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
+    account = scrap_url(driver, text, posts=5, loging_in=True)
+    analyzed = analyze_facebook(account)
     print("done")
     # https://www.facebook.com/ofri.shani.31/posts/10216864802065081
-    return True
+    return (vars(analyzed))
 
 # Decorator defines a route
 # http://localhost:5000/
@@ -76,6 +82,15 @@ def get_post():
     # get_posts(data)
     # print(data)
     return scrap_post(data)
+
+@app.route('/login', methods=['POST'])
+def get_login_details():
+    driver = init_sel()
+    data = request.get_json()
+    # get_posts(data)
+    print(data)
+    return login(driver, data.name, data.password)
+
 
 # @app.route('/scanPost', methods=['GET'])
 # def send_post_result():
