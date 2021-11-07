@@ -14,6 +14,7 @@ from datetime import date
 from Analyzer.Analyzer import analyze_facebook
 import pprint
 import json
+from machine_learning.datatrain import BertBinaryClassifier
 
 """
     some global needed variable, some might change in diffrent versions of Facebook
