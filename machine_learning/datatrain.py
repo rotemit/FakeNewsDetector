@@ -289,12 +289,12 @@ class BertBinaryClassifier(nn.Module):
         super(BertBinaryClassifier, self).__init__()
         self.bert = BertModel.from_pretrained('onlplab/alephbert-base') #our BERT is AlephBERT
         self.dropout = nn.Dropout(dropout)
-        self.linear = nn.Linear(768, 1)
-        self.sigmoid = nn.Sigmoid()
+        self.linear = nn.Linear(768, 1)     #this means that the network is dense (fully connected - every neuron from dropout layer connects to every neuron in this layer). 768 neurons in this Linear layer, outputs to a single neuron
+        self.sigmoid = nn.Sigmoid()         #sigmoid is not a layer, but a function. normalizes the output from the neural network
 
     def forward(self, tokens, masks=None):
         pooled_output = self.bert(tokens, attention_mask=masks)['pooler_output']
-        dropout_output = self.dropout(pooled_output)
+        dropout_output = self.dropout(pooled_output)    #the dropout layer randomly drops some of BERT's previous layers
         linear_output = self.linear(dropout_output)
         proba = self.sigmoid(linear_output)
         return proba
@@ -336,8 +336,11 @@ def training_heb(filename, model_filename, tokenizer_filename):
 
 
     #================ALEPHBERT===========================================================
-    BATCH_SIZE = 1      #when 2, much less posts are examined in training
-    EPOCHS = 1          #tried changing but didn't affect the result
+    #were doing transfer learning, because this model already learned a lot
+    BATCH_SIZE = 16      #try 16. or 32. training will be faster.
+                        #after BATCHSIZE samples, will update the network
+    EPOCHS = 50          #try changing to 50. if after a certaing number of epochs there isnt a drastic change, lower the number
+    #leave learning rate small, because we dont want to drastically change everything bert learned before
     LEARNING_RATE = 3e-6   #tried 0.001, 0.0001, 3e-6. all pretty much the same acc result
 
     df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
