@@ -768,7 +768,7 @@ def click_on_all(driver, element_xpath):
     return len(elements)
 
 
-def scrap_one_post(driver, post_url, comments):
+def scrap_one_post(driver, post_url, posts):
     post_url = check_url(post_url)
     if is_logged_in:
         driver.get(post_url)
@@ -814,8 +814,9 @@ def scrap_one_post(driver, post_url, comments):
 
     if content == "":
         content = None
-
-    comments = scrap_comments(driver, comments)
+    elif len(content) > 256:
+        return "The post it too long. Maximum words is 256."
+    # comments = scrap_comments(driver, comments)
     account = None
     url_account = ""
     if writer is not None and "group" in post_url:
@@ -838,21 +839,21 @@ def scrap_one_post(driver, post_url, comments):
         if myUser != "":
             print(myUser)
             url_account = "https://www.facebook.com/" + myUser
-            # print(url_account)
-            # url_account = check_url(url_account)
-            # account = scrap_account(driver, url_account)
-            # print(account)
     else:
         url_account =  post_url.split("posts")[0]
-        # url_account = check_url(url_account)
+
     if url_account != "":
         url_account = check_url(url_account)
         print(url_account)
         account = scrap_account(driver, url_account)
         if account is None:
             account = scrap_page(driver, url_account)
+
+        if account is not None:
+            user_posts = scrap_posts(driver, url_account, posts)
+            account.set_posts(user_posts)
         print(account)
-    return Post(writer, content, comments, account)
+    return Post(writer, content, None, account)
 
 
 def scrap_url(driver, url, posts=0, loging_in=False):
@@ -864,14 +865,14 @@ def scrap_url(driver, url, posts=0, loging_in=False):
     if "posts" in url or "permalink" in url:
         one_post = scrap_one_post(driver, url, posts)
         if one_post is None:
-            return None
+            return "Something went wrong with the post. Please try again."
         return one_post
 
     # scarpping a group
     elif "groups" in url:
         group = scrap_group(driver, url)
         if group is None:
-            return None
+            return "Something went wrong with the group. Please try again."
         group_posts = scrap_posts(driver, url, posts)
         group.set_posts(group_posts)
         return group
@@ -882,7 +883,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
         if account is None:
             page = scrap_page(driver, url)
             if page is None:
-                return None
+                return "Make sure the url is of valid post, group, page or account in Facebook"
             else:
                 page_posts = scrap_posts(driver, url, posts)
                 page.set_posts(page_posts)
