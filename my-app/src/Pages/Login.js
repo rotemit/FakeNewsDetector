@@ -1,14 +1,15 @@
 // import React from 'react';
 import "./Login.css";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 
 export const Login = () => {
     const [name , setName] = useState('');
     const [password , setPassword] = useState('');
 
-   
     async function onSubmit()  {   
+        setName('');
+        setPassword('');
         const response = await fetch('/login', {
         method: 'POST',
         headers: {
@@ -17,7 +18,7 @@ export const Login = () => {
         body: JSON.stringify({ name: name, password: password }),
         })
         if (response.ok) {
-            console.log(response.json())
+            response.json().then((res) => console.log(res)).catch((e) => console.log(e))
         } 
     
     }
@@ -33,11 +34,11 @@ export const Login = () => {
             </div>
             <div class="field">
                 <label>Password</label>
-                <input type="text" name="Password" onChange={(e) => setPassword(e.target.value)} />
+                <input type="password" name="Password" onChange={(e) => setPassword(e.target.value)} />
             </div>
             <button class="ui button" type="submit" onClick={onSubmit}>Submit</button>
         </div>
-            <a class="item" href="#link">Skip</a>
+            <a class="item" href="/ScanPost">Skip</a>
         </div>
       </div>
     )

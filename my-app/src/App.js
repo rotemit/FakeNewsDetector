@@ -3,6 +3,8 @@ import {ScanPost} from './Pages/ScanPost'
 import {Login} from './Pages/Login'
 import { About } from './Pages/About';
 import React, { useState, useEffect } from "react";
+import background from "./image.jpeg";
+import image from "./istockphoto-1176082691-612x612.jpg"
 
 const Link = ({ className, href, children }) => {
   const onClick = (event) => {
@@ -27,7 +29,6 @@ const Link = ({ className, href, children }) => {
 
 const Header = () => {
   return (
-    // <div class="four wide column">
     <div className="ui menu">
       <Link href="/" className="item">
         Login
@@ -39,7 +40,6 @@ const Header = () => {
         About
       </Link>
     </div>
-    // </div>
   );
 };
 
@@ -62,19 +62,18 @@ const Route = ({ path, children }) => {
 };
 
 const App = () => {
-
   return (
-    <div>
-    <Header />
-    <Route path="/About">
-      <About />
-    </Route>
-    <Route path="/ScanPost">
-      <ScanPost  />
-    </Route>
-    <Route path="/">
-      <Login  />
-    </Route>
+    <div style={{ backgroundImage: `url(${background})` }}>
+      <Header />
+      <Route path="/About">
+        <About />
+      </Route>
+      <Route path="/ScanPost">
+        <ScanPost  />
+      </Route>
+      <Route path="/">
+        <Login  />
+      </Route>
   </div>
   )
 }
