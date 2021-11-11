@@ -14,6 +14,7 @@ from datetime import date
 from Analyzer.Analyzer import analyze_facebook
 import pprint
 import json
+from machine_learning.datatrain import BertBinaryClassifier
 
 """
     some global needed variable, some might change in diffrent versions of Facebook
@@ -655,7 +656,7 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
                 # replacing all new-lines in post to spaces
                 # and inserting the post to the given array if not already there
                 text = post.text.replace('\n', ' ')
-                if text not in arr and text != '':
+                if text not in arr and text != '' and len(text) < 256:
                     arr.insert(index, text)
                     index += 1
                     counter += 1
@@ -715,6 +716,8 @@ def scrap_comments(driver, num=0):
         age = 0
         start_text = 1
         for j, line in enumerate(lines):
+            if "Reply to" in line or line.endswith("Reply"):
+                break
             if "Like" in line:
                 try:
                     likes = int(lines[j-1])
@@ -737,13 +740,14 @@ def scrap_comments(driver, num=0):
                         likes = 0
                         text = ' '.join(lines[start_text:j])
                     age = days_from_human_format(age_arr[2])
-                if text == "":
-                    text = None
-                comments.insert(arr_index, {"Writer": writer, "Text": text, "Likes": likes, "Age": age})
-                arr_index += 1
                 if(len(lines) > j+1):
                     writer = lines[j+1]
                     start_text = j+2
+                if text == "" or len(text) >= 256 or text is None: #for yap. length must be less than 256
+                   continue
+                comments.insert(arr_index, {"Writer": writer, "Text": text, "Likes": likes, "Age": age})
+                arr_index += 1
+
         if arr_index >= num:
             break
 
@@ -764,7 +768,7 @@ def click_on_all(driver, element_xpath):
     return len(elements)
 
 
-def scrap_one_post(driver, post_url, comments):
+def scrap_one_post(driver, post_url, posts):
     post_url = check_url(post_url)
     if is_logged_in:
         driver.get(post_url)
@@ -777,20 +781,27 @@ def scrap_one_post(driver, post_url, comments):
     sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
     click_on_all(driver, "//div[text()='See More']")
     loops = 0
-    while sum != 0 and loops < 10:
+    while sum != 0 and loops < 10 and loops < comments/20:
         sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
         click_on_all(driver, "//div[text()='See More']")
         loops += 1
 
     post_writer = driver.find_elements_by_xpath("//h2[@class='gmql0nx0 l94mrbxd p1ri9a11 lzcic4wl aahdfvyu hzawbc8m']")
-    if len(post_writer) == 1:
+    if len(post_writer) >0:
         writer = post_writer[0].text
+        print("writer is: " + writer)
     else:
         writer = None
 
     post_content = driver.find_elements_by_xpath("//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v b1v8xokw oo9gr5id hzawbc8m']")
+
+    content = ""
     if len(post_content) > 0:
-        content = post_content[len(post_content)-1].text.replace("\n", " ")
+        for cont in post_content:
+            if cont.text != "" and cont.text != " ":
+                content = cont.text.replace("\n", " ")
+                break
+        print("content is: " + content)
     else:
         content = None
 
@@ -803,66 +814,46 @@ def scrap_one_post(driver, post_url, comments):
 
     if content == "":
         content = None
+    elif len(content) > 256:
+        return "The post it too long. Maximum words is 256."
+    # comments = scrap_comments(driver, comments)
+    account = None
+    url_account = ""
+    if writer is not None and "group" in post_url:
+        actions = ActionChains(driver)
+        actions.send_keys(Keys.HOME)
 
-    comments = scrap_comments(driver)
+        actions.perform()
+        redirect(driver, writer, False)
+        time.sleep(3)
 
+        writer_page_btn = driver.find_elements_by_xpath("//span[@class='nc684nl6']")
+        url_account = driver.current_url
+        print(url_account)
+        url_arr = url_account.split('/')
+        myUser = ""
+        for i, cell in enumerate(url_arr):
+            if "user" in cell:
+                myUser = "/".join(url_arr[i+1:])
+                break
+        if myUser != "":
+            print(myUser)
+            url_account = "https://www.facebook.com/" + myUser
+    else:
+        url_account =  post_url.split("posts")[0]
 
-    # account = driver.find_elements_by_xpath("//span[@class='nc684nl6']")
-    # accounts = driver.find_elements_by_xpath("//a[@class='oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl oo9gr5id gpro0wi8 lrazzd5p']")
-    # account = None
-    # for elem in accounts:
-    #     print(elem.text)
-    #     if elem.text == writer:
-    #         account = elem
-    #         break
-    # if account is not None:
-    #     try:
-    #         account.click()
-    #     except:
-    #         webdriver.ActionChains(driver).move_to_element(account).click(account).perform()
-    #     # account[0].click()
-    #     time.sleep(2)
-    #     print(driver.current_url)
-    actions = ActionChains(driver)
-    actions.send_keys(Keys.HOME)
-    # actions.send_keys(Keys.HOME)
-    actions.perform()
-    redirect(driver, writer, False)
-    time.sleep(3)
-    # not_wanted_url = driver.current_url
-    # while "groups" in driver.current_url:
-    writer_page_btn = driver.find_elements_by_xpath("//span[@class='nc684nl6']")
-    # counter = 0
-    # for btn in writer_page_btn:
-    #     if writer in btn.text:
-    #         counter += 1
-    #         if counter > 1:
-    #             webdriver.ActionChains(driver).move_to_element(btn).click(btn).perform()
-    #             time.sleep(3)
-    #             if "groups" not in driver.current_url:
-    #                 break
-            # #
+    if url_account != "":
+        url_account = check_url(url_account)
+        print(url_account)
+        account = scrap_account(driver, url_account)
+        if account is None:
+            account = scrap_page(driver, url_account)
 
-        # print(str(i) + ": " + btn.text)
-        # actions.send_keys(Keys.END)
-        # actions.perform()
-        # redirect(driver, writer, False)
-        # time.sleep(3)
-    url_account = driver.current_url
-    print(url_account)
-    url_arr = url_account.split('/')
-    myUser = ""
-    for i, cell in enumerate(url_arr):
-        if "user" in cell:
-            myUser = "/".join(url_arr[i+1:])
-            break
-    print(myUser)
-    url_account = "https://www.facebook.com/" + myUser
-    print(url_account)
-    url_account = check_url(url_account)
-    account = scrap_account(driver, url_account)
-    print(account)
-    return Post(writer, content, comments, account)
+        if account is not None:
+            user_posts = scrap_posts(driver, url_account, posts)
+            account.set_posts(user_posts)
+        print(account)
+    return Post(writer, content, None, account)
 
 
 def scrap_url(driver, url, posts=0, loging_in=False):
@@ -874,14 +865,14 @@ def scrap_url(driver, url, posts=0, loging_in=False):
     if "posts" in url or "permalink" in url:
         one_post = scrap_one_post(driver, url, posts)
         if one_post is None:
-            return None
+            return "Something went wrong with the post. Please try again."
         return one_post
 
     # scarpping a group
     elif "groups" in url:
         group = scrap_group(driver, url)
         if group is None:
-            return None
+            return "Something went wrong with the group. Please try again."
         group_posts = scrap_posts(driver, url, posts)
         group.set_posts(group_posts)
         return group
@@ -890,10 +881,9 @@ def scrap_url(driver, url, posts=0, loging_in=False):
         account = scrap_account(driver, url) #trying to scrap account
         # scarpping a page
         if account is None:
-            print("PPPAAAAGGGGGEEEE")
             page = scrap_page(driver, url)
             if page is None:
-                return None
+                return "Make sure the url is of valid post, group, page or account in Facebook"
             else:
                 page_posts = scrap_posts(driver, url, posts)
                 page.set_posts(page_posts)
@@ -912,14 +902,15 @@ def scrap_url(driver, url, posts=0, loging_in=False):
 if __name__ == '__main__':
 
     driver = init_sel() #to init the driver
-    if not login(driver, "ofrishani10@walla.com", "Ls5035"):
-        login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
+    # if not login(driver, "ofrishani10@walla.com", "Ls5035"):
+    login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
 
-    account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
+    # account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
+    post = scrap_url(driver, "https://www.facebook.com/gilad.agam/posts/2373750039321151", posts=20, loging_in=True) #to scrap something; this case an account
 
     finish_sel(driver) #to finish with the driver
 
-    analyzed = analyze_facebook(account) #to analyze the something; this case the account
+    analyzed = analyze_facebook(post) #to analyze the something; this case the account
     print(vars(analyzed))
 
     # account = scrap_url(driver, "https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True)

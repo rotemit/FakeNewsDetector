@@ -23,12 +23,17 @@ def analyze_facebook(obj):
 def analyze_post(post_obj):
     post = post_obj.content
     name = post_obj.writer
-    comments_arr = [comm['Text'] for comm in post_obj.comments]
-    comments_arr.insert(0, post)
-    print(comments_arr)
+    if post_obj.account is None and post is not None:
+        sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments([post])
+        machine_learning_result = machineLeaningAnalyzer.grading_posts([post])
+        return ScanResult(name, sentimentAnalyzer_result, machine_learning_result, -1)
+
+    posts = post_obj.account.posts
+    if post is not None:
+        posts.insert(0, post)
     utv_result =  UTVAnalysis.analyze_user(post_obj.account)
-    if len(comments_arr) == 0:
-       return ScanResult(name, -1, -1, utv_result)
-    sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments(comments_arr)
-    machine_learning_result = machineLeaningAnalyzer.grading_posts(comments_arr)
+    if len(posts) == 0:
+        return ScanResult(name, -1, -1, utv_result)
+    sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments(posts)
+    machine_learning_result = machineLeaningAnalyzer.grading_posts(posts)
     return ScanResult(name, sentimentAnalyzer_result, machine_learning_result, utv_result)

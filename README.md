@@ -3,13 +3,17 @@
 Hello! Welcome to our FakeNewsDetector, the ultimate tool for Fake News Detection in Hebrew politics on Facebook,
 created as a final project for our Bachelor's degree in Computer Science.
 
-In order to run our project, you will need to create a virtual enviorment to do so, write the following command inside the project folder:
-py -3 -m venv <enviorment name>
+In order to run our project, you will need to git clone the project:
+
+Then cd into the project folder:
+
+Then you will need to create a virtual environment, in the project folder write the following command:
+py -3 -m venv (environment name)
 
 Now you will need to activate it:
-<enviorment name>\Scripts\activate
+(environment name)\Scripts\activate
 
-Finally, run pip install to the following libraries when the enviorment is activated:</br>
+Finally, run pip install to the following libraries when the environment is activated:</br>
 pip install flask</br>
 pip install flask_cors</br>
 pip install facebook_scraper - אולי לא צריך</br>

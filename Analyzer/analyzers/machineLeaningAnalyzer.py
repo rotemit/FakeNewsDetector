@@ -4,12 +4,13 @@ from Analyzer.analyzers.CovidWords import covid_list
 def grading_posts(posts):
     amount = 0
     counter = 0
-    model = "machine_learning/combined_trained_model.pkl"
-    vectorizer = "machine_learning/tfidf_vectorizer.pkl"
+    model = "machine_learning/BERT_model.pkl"
+    tokenizer = "machine_learning/AlephBERT_tokenizer.pkl"
     for post in posts:
         if(check_covid_relateness(post) > 0):
-            # counter += grade_single_post(post, model, vectorizer)[0]
-            counter += 1 #TODO: change when ML works
+            # post_grade = grade_single_post(post, model, tokenizer)
+            # print('post: '+post+'\ngrade: '+str(post_grade))
+            # counter += post_grade
             amount += 1
     if amount == 0:
        return -1
@@ -19,10 +20,13 @@ def grading_posts(posts):
 
 
 def check_covid_relateness(post):
+    if post is None or post == "":
+        return 0
     counter = 0
     length = len(post.split(' '))
     for word in covid_list:
         if word in post:
+            print(word)
             counter += 1
     div = counter/length
     percent = int((div * 100) // 1)

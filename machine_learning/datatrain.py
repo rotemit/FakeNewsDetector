@@ -40,20 +40,24 @@ import torch
 #       pip install transformers    #for AlephBERT
 #       pip install torch torchvision torchaudio    #for AlephBERT
 
-def grade_single_post(post, model, vectorizer):
-    #load trained model and fitted vectorizer
-    model = joblib.load(model)
-    vectorizer = joblib.load(vectorizer)
-    #translate post to english, regardless of source language
-    translator = GoogleTranslator()
-    translated_post = translator.translate(post)
-    readied_post = readify_text(translated_post)
-    #vectorize and predict fakeness
-    vectorized_post = vectorizer.transform([readied_post])
-    y_pred = model.predict(vectorized_post)
-    #print result
-    print("post:\n" + post + "\ntranslated post:\n" + translated_post + "\nreadied post:\n"+readied_post+"\ngrade: " + str(y_pred))
-    return y_pred
+# def grade_single_post(post, model, tokenizer):
+#     #load trained model and fitted tokenizer
+#     model = joblib.load(model)
+#     tokenizer = joblib.load(tokenizer)
+#     #prepare post
+#     post = [post]
+#
+#
+#     #translate post to english, regardless of source language
+#     translator = GoogleTranslator()
+#     translated_post = translator.translate(post)
+#     readied_post = readify_text(translated_post)
+#     #vectorize and predict fakeness
+#     vectorized_post = tokenizer.transform([readied_post])
+#     y_pred = model.predict(vectorized_post)
+#     #print result
+#     print("post:\n" + post + "\ntranslated post:\n" + translated_post + "\nreadied post:\n"+readied_post+"\ngrade: " + str(y_pred))
+#     return y_pred
 
 '''
     manual tests for svm
@@ -164,7 +168,7 @@ def our_svm(tfidf_train, label_train, tfidf_valid, label_valid, model_filename, 
     #check model accuracy
     print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
     print(confusion_matrix(label_valid, label_prediction))
-#bla
+
     #save trained model
     joblib.dump(svm_model, model_filename)
 
@@ -332,9 +336,9 @@ def training_heb(filename, model_filename, tokenizer_filename):
 
 
     #================ALEPHBERT===========================================================
-    BATCH_SIZE = 1
-    EPOCHS = 1
-    LEARNING_RATE = 0.001
+    BATCH_SIZE = 1      #when 2, much less posts are examined in training
+    EPOCHS = 1          #tried changing but didn't affect the result
+    LEARNING_RATE = 3e-6   #tried 0.001, 0.0001, 3e-6. all pretty much the same acc result
 
     df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
     X = df['keywords']
@@ -357,11 +361,10 @@ def training_heb(filename, model_filename, tokenizer_filename):
     train_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, train_tokens))
     test_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, test_tokens))
 
-    # X = map(alephbert_tokenizer.convert_tokens_to_ids, X)   #we want X to be a list of ids-strings
     maxlen = 250         #250 is YAP's limit, 512 is BERT's limit
     train_tokens_ids = pad_sequences(train_tokens_ids, maxlen=512)
     test_tokens_ids = pad_sequences(test_tokens_ids, maxlen=512)
-#fa
+
     #generate training and testing masks
     train_masks = [[float(i > 0) for i in ii] for ii in train_tokens_ids]
     test_masks = [[float(i > 0) for i in ii] for ii in test_tokens_ids]
@@ -380,9 +383,6 @@ def training_heb(filename, model_filename, tokenizer_filename):
     test_sampler = torch.utils.data.SequentialSampler(test_dataset)
     test_dataloader = torch.utils.data.DataLoader(test_dataset, sampler=test_sampler, batch_size=BATCH_SIZE)
 
-    # alephbert = BertModel.from_pretrained('onlplab/alephbert-base')
-
-    # if not finetuning - disable dropout
 
     bert_clf = BertBinaryClassifier()
     optimizer = torch.optim.Adam(bert_clf.parameters(), lr=LEARNING_RATE)
@@ -418,19 +418,50 @@ def training_heb(filename, model_filename, tokenizer_filename):
             all_logits += list(numpy_logits[:, 0])
 
 
-    # #save trained model
-    # joblib.dump(bert_clf, model_filename)
-    #
-    # #save tokenizer
-    # joblib.dump(alephbert_tokenizer, tokenizer_filename)
+    #save trained model
+    joblib.dump(bert_clf, model_filename)
+
+    #save tokenizer
+    joblib.dump(alephbert_tokenizer, tokenizer_filename)
 
     print(classification_report(y_test, bert_predicted))
     #================ALEPHBERT===========================================================
+def pad(post, size):
+    return [0]*abs(len(post)-size) + post
 
 
-def bert_predict(post, model_filename, tokenizer_filename):
-    model = joblib.load(model_filename)
-    vectorizer = joblib.load(tokenizer_filename)
+def grade_single_post(post, model, tokenizer):
+    #load trained model and fitted tokenizer
+    bert_clf = joblib.load(model)
+    tokenizer = joblib.load(tokenizer)
+    #prepare post
+    post = clean_heb_text(post)
+    post = get_keyWords(post)
+    post = ['[CLS]'] + post[:511]
+    #AlephBERT post
+    post_ids = tokenizer.convert_tokens_to_ids(post)
+    post_ids = pad(post_ids, 512)
+    # post_ids = nn.utils.rnn.pad_sequence(post_ids, batch_first='pre', padding_value=0)
+
+    #generate masks
+    post_masks = [float(i > 0) for i in post_ids]
+    post_masks_tensor = torch.tensor([post_masks])
+    post_tokens_tensor = torch.tensor([post_ids])
+
+    #evaluate
+    bert_clf.eval()
+    with torch.no_grad():
+        # token_ids, masks, labels = tuple(t for t in batch_data)
+        logits = bert_clf(post_tokens_tensor, post_masks_tensor)
+        numpy_logits = logits.cpu().detach().numpy()
+
+        bert_predicted = (numpy_logits[:, 0] > 0.5)
+        all_logits = (numpy_logits[:, 0])
+
+    return float(bert_predicted)
+
+
+
 
     #confusion matrix
     # conf_matrix = confusion_matrix(y_true=y_test, y_pred=y_pred)
@@ -461,11 +492,15 @@ if __name__ == '__main__':
 
     #***********HEB DATA!******************************
     # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
-    # csv_cleaner(filename, heb=True)
-    filename = 'dataset_for_code_testing - Sheet1.csv'
-    # csv_cleaner(filename, heb=True)
-    clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
-    training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
+    # # csv_cleaner(filename, heb=True)
+    # # filename = 'dataset_for_code_testing - Sheet1.csv'
+    # # csv_cleaner(filename, heb=True)
+    # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
+    # training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
+    model = 'BERT_model.pkl'
+    tokenizer = 'AlephBERT_tokenizer.pkl'
+    print(grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", model, tokenizer))
+
 
 """
 optional classifiers to add:
