@@ -26,7 +26,10 @@ def analyze_post(post_obj):
     comments_arr = [comm['Text'] for comm in post_obj.comments]
     comments_arr.insert(0, post)
     print(comments_arr)
-    utv_result =  UTVAnalysis.analyze_user(post_obj.account)
+    if post_obj.account is not None:
+        utv_result =  UTVAnalysis.analyze_user(post_obj.account)
+    else:
+        utv_result = -1
     if len(comments_arr) == 0:
        return ScanResult(name, -1, -1, utv_result)
     sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments(comments_arr)

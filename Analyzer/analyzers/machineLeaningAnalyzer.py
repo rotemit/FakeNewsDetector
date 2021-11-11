@@ -8,9 +8,9 @@ def grading_posts(posts):
     tokenizer = "machine_learning/AlephBERT_tokenizer.pkl"
     for post in posts:
         if(check_covid_relateness(post) > 0):
-            post_grade = grade_single_post(post, model, tokenizer)
-            print('post: '+post+'\ngrade: '+str(post_grade))
-            counter += post_grade
+            # post_grade = grade_single_post(post, model, tokenizer)
+            # print('post: '+post+'\ngrade: '+str(post_grade))
+            # counter += post_grade
             amount += 1
     if amount == 0:
        return -1
@@ -20,6 +20,8 @@ def grading_posts(posts):
 
 
 def check_covid_relateness(post):
+    if post is None or post == "":
+        return 0
     counter = 0
     length = len(post.split(' '))
     for word in covid_list:
