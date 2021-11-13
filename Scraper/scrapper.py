@@ -781,7 +781,7 @@ def scrap_one_post(driver, post_url, posts):
     sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
     click_on_all(driver, "//div[text()='See More']")
     loops = 0
-    while sum != 0 and loops < 10 and loops < comments/20:
+    while sum != 0 and loops < 10:
         sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
         click_on_all(driver, "//div[text()='See More']")
         loops += 1
