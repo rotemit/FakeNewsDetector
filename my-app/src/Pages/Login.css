@@ -27,6 +27,7 @@
     font: bold;
     font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     color: #5f72df;
+    margin: 10px;
 }
 
 .urlInput {
@@ -73,19 +74,22 @@
     padding: 40px;
     
 }
+    /* align-content: center;
+    text-align: center;
+    width: 20;
+    height: 10;
+    margin: 20px;
+    font: normal;
+    padding: 25px;
+    cursor: pointer;
+    font-size: larger;
+    font-style: inherit;
+    border-radius: 4px;
+    background-color: #b4214d;
+    color: white;
+    margin: 15 1rem;
+  } */
 
-.loader {
-    border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid gray; /* Blue */
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 2s linear infinite;
-    display: inline-flex;
-
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+  .fiels {
+      display: flex;
+  }
