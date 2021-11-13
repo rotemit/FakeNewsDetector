@@ -1,4 +1,4 @@
-from Analyzer.analyzers import PotentialFakeNewsAnalysis, UTVAnalysis, machineLeaningAnalyzer
+from Analyzer.analyzers import sentimentAnalysis, UTVAnalysis, machineLeaningAnalyzer
 from modules.Scan_result import ScanResult
 from modules.AnalysisResult import AnalysisResult
 from modules.Post import Post
@@ -15,7 +15,7 @@ def analyze_facebook(obj):
     utv_result = UTVAnalysis.analyze_user(obj)
     if len(posts) == 0:
        return ScanResult(name, -1, -1, utv_result)
-    sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments(posts)
+    sentimentAnalyzer_result = sentimentAnalysis.analyze_sentiments(posts)
     machine_learning_result = machineLeaningAnalyzer.grading_posts(posts)
     return ScanResult(name, sentimentAnalyzer_result, machine_learning_result, utv_result)
 
@@ -24,7 +24,7 @@ def analyze_post(post_obj):
     post = post_obj.content
     name = post_obj.writer
     if post_obj.account is None and post is not None:
-        sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments([post])
+        sentimentAnalyzer_result = sentimentAnalysis.analyze_sentiments([post])
         machine_learning_result = machineLeaningAnalyzer.grading_posts([post])
         return ScanResult(name, sentimentAnalyzer_result, machine_learning_result, -1)
 
@@ -34,6 +34,6 @@ def analyze_post(post_obj):
     utv_result =  UTVAnalysis.analyze_user(post_obj.account)
     if len(posts) == 0:
         return ScanResult(name, -1, -1, utv_result)
-    sentimentAnalyzer_result = PotentialFakeNewsAnalysis.analyze_sentiments(posts)
+    sentimentAnalyzer_result = sentimentAnalysis.analyze_sentiments(posts)
     machine_learning_result = machineLeaningAnalyzer.grading_posts(posts)
     return ScanResult(name, sentimentAnalyzer_result, machine_learning_result, utv_result)
