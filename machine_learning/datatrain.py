@@ -1,82 +1,47 @@
 import csv
 import numpy as np
 import pandas as pd
-import itertools
+# import itertools
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.metrics import classification_report
 from machine_learning.stop_words import stop_words
-from machine_learning.yap_server import get_keyWords
-from sklearn import svm
-from sklearn import metrics
+from machine_learning.yap_server import get_keyWords, get_lemmas, random_lemmas
+# from sklearn import svm
+# from sklearn import metrics
 import joblib
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn import linear_model
-from deep_translator import GoogleTranslator #pip installed
+# from sklearn.feature_extraction.text import HashingVectorizer
+# from sklearn import linear_model
+# from deep_translator import GoogleTranslator #pip installed
 # from machine_learning.heb_data_collector import get_group_posts
-from sklearn.linear_model import LogisticRegressionCV
-from nltk.stem import PorterStemmer
-from nltk.stem import LancasterStemmer
-from nltk.stem import WordNetLemmatizer
-import matplotlib.pyplot as plt
+# from sklearn.linear_model import LogisticRegressionCV
+# from nltk.stem import PorterStemmer
+# from nltk.stem import LancasterStemmer
+# from nltk.stem import WordNetLemmatizer
+# import matplotlib.pyplot as plt
 # import nltk
 # nltk.download('wordnet')
 #*********imports for deep learning************
-from tensorflow.keras.preprocessing.text import Tokenizer
+# from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Embedding, LSTM, Conv1D, MaxPool1D
-from tensorflow.keras.optimizers import Adam
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense, Embedding, LSTM, Conv1D, MaxPool1D
+# from tensorflow.keras.optimizers import Adam
 import gensim
 
 from transformers import BertModel, BertTokenizerFast
 import torch.nn as nn
 # from pytorch_pretrained_bert import BertTokenizer, BertModel
 import torch
+import random
 
 #pips: pip install tensorflow --user
 #       pip install gensim
 #       pip install transformers    #for AlephBERT
 #       pip install torch torchvision torchaudio    #for AlephBERT
 
-# def grade_single_post(post, model, tokenizer):
-#     #load trained model and fitted tokenizer
-#     model = joblib.load(model)
-#     tokenizer = joblib.load(tokenizer)
-#     #prepare post
-#     post = [post]
-#
-#
-#     #translate post to english, regardless of source language
-#     translator = GoogleTranslator()
-#     translated_post = translator.translate(post)
-#     readied_post = readify_text(translated_post)
-#     #vectorize and predict fakeness
-#     vectorized_post = tokenizer.transform([readied_post])
-#     y_pred = model.predict(vectorized_post)
-#     #print result
-#     print("post:\n" + post + "\ntranslated post:\n" + translated_post + "\nreadied post:\n"+readied_post+"\ngrade: " + str(y_pred))
-#     return y_pred
 
-'''
-    manual tests for svm
-'''
-def our_svm_tests(tfidf_vectorizer, svm_classifier):
-    posts = pd.read_csv('heb_posts.csv')
-    for post in posts:
-        en_post = GoogleTranslator(source='he', target='en').translate(post)
-        grade = grade_post(en_post, tfidf_vectorizer, svm_classifier)
-        print('Post: '+en_post+'\nGrade: '+str(grade)+'\n')
-
-"""
-    Given a post, a _ , and a classifier,
-    return a binary grade indicating the level of fake
-"""
-def grade_post (post, machine, classifer):
-    tfidf_test = machine.transform([post])
-    y_pred = classifer.predict(tfidf_test)
-    return y_pred
 
 """
     Remove punctuation
@@ -85,7 +50,7 @@ def remove_punc(txt):
     #make lowercase
     txt = txt.lower()
     # initializing punctuations string
-    punc = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+    punc = '''!()-[]{};:'"\,<>./?@#$%^&*_~–'''
 
     # Removing punctuations in string
     # Using loop + punctuation string
@@ -94,110 +59,19 @@ def remove_punc(txt):
             txt = txt.replace(ele, "")
     return txt
 
-"""
-    Remove frequent and unimportant words
-"""
-def remove_stopwords(txt):
-    stopwords = stop_words
-    tokens = txt.split(" ")
-    resultwords = [word for word in tokens if word not in stopwords]
-    result = ' '.join(resultwords)
-    return result
 
-def our_stemmer(txt):
-    # ps = PorterStemmer()
-    # toreturn = ' '.join(ps.stem(word) for word in txt.split())
-    # return toreturn
-    ls = LancasterStemmer()
-    toreturn = ' '.join(ls.stem(word) for word in txt.split())
-    return toreturn
-
-def our_lemmatizer(txt):
-    wordnet_lemmatizer = WordNetLemmatizer()
-    toreturn = ' '.join(wordnet_lemmatizer.lemmatize(word, pos="v") for word in txt.split())
-    return toreturn
-
-def readify_text(txt):
-    txt = remove_punc(txt)
-    txt = remove_stopwords(txt)
-    # txt = our_stemmer(txt)
-    txt = our_lemmatizer(txt)
+'''
+    Replace recurring English words liks 'fda' with corresponding Hebrew words
+'''
+def replace_recurring_english_words(txt):
+    txt = txt.lower()
+    txt = txt.replace('mrna', 'מרנא')
+    txt = txt.replace('rna', 'רנא')
+    txt = txt.replace('fda', 'פדא')
+    txt = txt.replace('pims', 'פימס')
+    txt = txt.replace('see more', '')
     return txt
 
-def our_clf(tfidf_train, label_train, tfidf_valid, label_valid, model_filename, vectorizer, vectorizer_filename):
-    clf_model = linear_model.Lasso(alpha=0.1)
-    clf_model.fit(tfidf_train, label_train)
-    # label_prediction = reg.predict(tfidf_valid)
-    # predict the labels for the text validation data
-    # label_prediction = clf_model.score(tfidf_valid)
-
-    # check model accuracy
-    #try:
-    #    score = reg.score(label_valid, label_prediction)
-    #    print(score)
-    #except:
-    #    print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
-    #print(score)
-
-    # save trained model
-    joblib.dump(clf_model, model_filename)
-
-    # save vectorizer
-    joblib.dump(vectorizer, vectorizer_filename)
-
-    print('finishing clf')
-    return clf_model
-
-
-'''
-    Given readied data for training and validation, do:
-        Perform training, evaluate model on validation set, print confusion matrix,
-        and save trained model in file 'joblib_filename'
-
-'''
-def our_svm(tfidf_train, label_train, tfidf_valid, label_valid, model_filename, vectorizer, vectorizer_filename):
-    # create a svm classifier
-    svm_model = svm.SVC(kernel='linear')
-
-    #train
-    svm_model.fit(tfidf_train, label_train)
-
-    #predict the labels for the text validation data
-    label_prediction = svm_model.predict(tfidf_valid)
-
-    #check model accuracy
-    print("Accuracy:", metrics.accuracy_score(label_valid, label_prediction))
-    print(confusion_matrix(label_valid, label_prediction))
-
-    #save trained model
-    joblib.dump(svm_model, model_filename)
-
-    #save vectorizer
-    joblib.dump(vectorizer, vectorizer_filename)
-
-    print('finishing svm')
-    return svm_model
-
-'''
-    Load and return trained model from file 'filename'
-'''
-def load_trained_svm_model(filename):
-    return joblib.load(filename)
-
-'''
-    Clean text:
-    1. Remove links
-    2. Readify text (clean, remove stopwords, stem)
-    3. Replace covid-19/coronavirus with 'Corona', as hebrew speakers write 
-'''
-def clean_text(txt):
-    txt = str(txt)
-    ret = ' '.join(item for item in txt.split() if ((not (item.startswith('https://'))) and (not '.com' in item)))
-    ret = readify_text(ret)
-    ret = ret.replace('covid19', 'corona')
-    ret = ret.replace('coronavirus', 'corona')
-    ret = ret.replace('coronavir', 'corona')
-    return ret
 
 '''
     Clean text, for Hebrew data:
@@ -208,6 +82,7 @@ def clean_heb_text(txt):
     txt = str(txt)
     ret = ' '.join(item for item in txt.split() if ((not (item.startswith('https://'))) and (not '.com' in item)))
     ret = remove_punc(ret)
+    ret = replace_recurring_english_words(ret)
     return ret
 
 '''
@@ -217,7 +92,8 @@ def clean_heb_text(txt):
 def clean_dataset(df, heb=False):
     if heb:
         df['clean_text'] = df.apply(lambda row: clean_heb_text(row['text']), axis=1)
-        df['keywords'] = df.apply(lambda row: get_keyWords(row['clean_text']), axis=1)
+        df['lemmatized'] = df.apply(lambda row: get_lemmas(row['clean_text']), axis=1)
+        # df['keywords'] = df.apply(lambda row: get_keyWords(row['clean_text']), axis=1)
     else:
         df['clean_text'] = df.apply(lambda row: clean_text(row['Text']), axis=1)
 
@@ -229,41 +105,7 @@ def csv_cleaner(file, heb=False):
     new_name = file.rsplit(".", 1)[0] + 'Clean.csv'
     df.to_csv(new_name, encoding='utf-8', index=False, mode='w+')
 
-def clean_combined_eng_datasets():
-    csv_cleaner('trueNews.csv')
-    csv_cleaner('fakeNews.csv')
-    csv_cleaner('Constraint_Train.csv')
-    csv_cleaner('Constraint_Val.csv')
-    csv_cleaner('english_test_with_labels.csv')
-    csv_cleaner('corona_fake.csv')
 
-def training_combined_eng_datasets():
-    #********************** COMBINED DAASETS **********************************
-    df_true = pd.read_csv('trueNewsClean.csv')
-    df_false = pd.read_csv('fakeNewsClean.csv')
-    df_Constraint = pd.read_csv('Constraint_TrainClean.csv')
-    df_ConstraintVal = pd.read_csv('Constraint_ValClean.csv')
-    df_en_test = pd.read_csv('english_test_with_labelsClean.csv')
-    df_corona_fake = pd.read_csv('corona_fakeClean.csv')
-    df_true.dropna(inplace=True)
-    df_false.dropna(inplace=True)
-    df_Constraint.dropna(inplace=True)
-    df_ConstraintVal.dropna(inplace=True)
-    df_en_test.dropna(inplace=True)
-    df_corona_fake.dropna(inplace=True)
-    frames = [df_true, df_false, df_Constraint, df_ConstraintVal, df_en_test, df_corona_fake]
-    df = pd.concat(frames, join='inner')
-    df.drop_duplicates()
-    labels = df['Binary Label']
-    #***************************************************************************
-    text_train, text_valid, label_train, label_valid = train_test_split(df['clean_text'], labels, test_size=0.2,
-                                                                        random_state=109)
-    tfidf_vectorizer = TfidfVectorizer(stop_words='english', strip_accents='unicode', ngram_range=(1, 2), norm=None)
-    tfidf_train = tfidf_vectorizer.fit_transform(text_train)
-    tfidf_valid = tfidf_vectorizer.transform(text_valid)
-    svm_classifier = our_svm(tfidf_train, label_train, tfidf_valid, label_valid, 'combined_trained_model.pkl', tfidf_vectorizer, 'tfidf_vectorizer.pkl')
-    #clf_classifier = our_clf(tfidf_train, label_train, tfidf_valid, label_valid, 'CLF_combined_trained_model.pkl', tfidf_vectorizer, 'CLF_tfidf_vectorizer.pkl')
-    our_svm_tests(tfidf_vectorizer, svm_classifier)
 
 #==========================HEBREW TRAINING=========================================================
 '''
@@ -284,6 +126,94 @@ def get_weight_matrix(model, vocab_size, vocab, DIM=100):
         weight_matrix[i] = model.wv[word]
     return weight_matrix
 
+
+def swap_word(new_words):
+    random_idx_1 = random.randint(0, len(new_words) - 1)
+    random_idx_2 = random_idx_1
+    counter = 0
+
+    while random_idx_2 == random_idx_1:
+        random_idx_2 = random.randint(0, len(new_words) - 1)
+        counter += 1
+
+        if counter > 3:
+            return new_words
+
+    new_words[random_idx_1], new_words[random_idx_2] = new_words[random_idx_2], new_words[random_idx_1]
+    return new_words
+
+
+def random_swap(words, n):
+    words = words.split()
+    new_words = words.copy()
+
+    for _ in range(n):
+        new_words = swap_word(new_words)
+
+    sentence = ' '.join(new_words)
+
+    return sentence
+
+
+def random_deletion(words, p):
+    words = words.split()
+
+    # obviously, if there's only one word, don't delete it
+    if len(words) == 1:
+        return words
+
+    # randomly delete words with probability p
+    new_words = []
+    for word in words:
+        r = random.uniform(0, 1)
+        if r > p:
+            new_words.append(word)
+
+    # if you end up deleting all words, just return a random word
+    if len(new_words) == 0:
+        rand_int = random.randint(0, len(words) - 1)
+        return [words[rand_int]]
+
+    sentence = ' '.join(new_words)
+
+    return sentence
+
+
+def augment_training_data(X_train, y_train, size):
+    merged = pd.DataFrame()
+    merged['sentence'] = X_train
+    merged['label'] = y_train
+
+    #Random Swap Augmentation
+    #randomly select rows
+    to_augment = merged.sample(frac = 0.07)
+    #augment these rows
+    for _, row in to_augment.iterrows():
+        augmented_sentence = random_swap(row['sentence'], 1)
+        merged.loc[str(size)] = [augmented_sentence, row['label']]
+        size += 1
+
+    #Random Deletion Augmetation
+    #randomly select rows
+    to_augment = merged.sample(frac = 0.07)
+    #augment these rows
+    for _, row in to_augment.iterrows():
+        augmented_sentence = random_deletion(row['sentence'], p=0.17)
+        merged.loc[str(size)] = [augmented_sentence, row['label']]
+        size += 1
+
+    # #Random Lemmatization Augmentation
+    # to_augment = merged.sample(frac=0.1)
+    # # augment these rows
+    # for _, row in to_augment.iterrows():
+    #     augmented_sentence = random_lemmas(row['sentence'], p=0.2)
+    #     merged.loc[str(size)] = [augmented_sentence, row['label']]
+    #     size += 1
+    #
+    return merged['sentence'], merged['label']
+
+
+
 class BertBinaryClassifier(nn.Module):
     def __init__(self, dropout=0.1):
         super(BertBinaryClassifier, self).__init__()
@@ -301,51 +231,17 @@ class BertBinaryClassifier(nn.Module):
 
 def training_heb(filename, model_filename, tokenizer_filename):
     df = pd.read_csv(filename)
-
-
-    #==============================W2V==============================================================
-    # df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
-    # X = df['keywords']  # X is a list of keyword-lists
-    # DIM = 100
-    # w2v_model = gensim.models.Word2Vec(sentences=X,  vector_size=DIM, window=10, min_count=1)
-    # print(len(w2v_model.wv)) #this is for us, see how many words came from the model
-    # #TRAINING
-    # tokenizer = Tokenizer()
-    # tokenizer.fit_on_texts(X)           #fit tokenizer for our vocabulary (taken from keywords)
-    # X = tokenizer.texts_to_sequences(X) #convert vectors to sequences
-    # maxlen = 50 #after checking the histogram of the length of all items in X
-    # X = pad_sequences(X, maxlen=maxlen)
-    # vocab_size = len(tokenizer.word_index) + 1
-    # embedding_vectors = get_weight_matrix(w2v_model, vocab_size, tokenizer.word_index, DIM=DIM)
-    # model = Sequential()
-    # model.add(Embedding(vocab_size, output_dim=DIM, weights=[embedding_vectors], input_length=maxlen, trainable=False))
-    # model.add(LSTM(units=8, activation = 'sigmoid', kernel_regularizer='l2'))
-    # model.add(Dense(1, activation = 'sigmoid'))
-    # opt = Adam(learning_rate=0.001)
-    # model.compile(loss='binary_crossentropy', optimizer=opt)
-    # print("model summary:\n")
-    # print(model.summary())
-    # labels = df['binary label']
-    # X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels)
-    # model.fit(X_train, y_train, validation_split=0.3, epochs=32)
-    # #TESTING
-    # y_pred = (model.predict(X_test)>=0.5).astype(int)
-    # print(accuracy_score(y_test, y_pred))
-    # print(classification_report(y_test, y_pred))
-    #==============================W2V==============================================================
-
-
     #================ALEPHBERT===========================================================
     #were doing transfer learning, because this model already learned a lot
-    BATCH_SIZE = 16      #try 16. or 32. training will be faster.
+    BATCH_SIZE = 16     #try 16. or 32. training will be faster.
                         #after BATCHSIZE samples, will update the network
-    EPOCHS = 50          #try changing to 50. if after a certaing number of epochs there isnt a drastic change, lower the number
+    EPOCHS = 6          #try changing to 50. if after a certaing number of epochs there isnt a drastic change, lower the number
     #leave learning rate small, because we dont want to drastically change everything bert learned before
     LEARNING_RATE = 3e-6   #tried 0.001, 0.0001, 3e-6. all pretty much the same acc result
 
-    df['keywords'] = df.apply(lambda row: from_str_to_lst(row['keywords']), axis=1)
-    X = df['keywords']
-    # X = df['clean_text'] #commented out when trying keywords
+    df['keywords'] = df.apply(lambda row: from_str_to_lst(row['lemmatized']), axis=1)
+    # X = df['keywords']
+    X = df['clean_text'] #commented out when trying keywords
     labels = df['binary label']
     alephbert_tokenizer = BertTokenizerFast.from_pretrained('onlplab/alephbert-base')
     # alephbert = BertModel.from_pretrained('onlplab/alephbert-base')
@@ -354,13 +250,16 @@ def training_heb(filename, model_filename, tokenizer_filename):
     # alephbert.eval()
     X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels)
 
+    #augment training set to add more data
+    X_train, y_train = augment_training_data(X_train, y_train, labels.size)
+
     y_train = np.array(y_train)
     y_test = np.array(y_test)
 
-    # train_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_train))
-    # test_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_test))
-    train_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_train)) #when using keywords
-    test_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_test))   #when using keywords
+    train_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_train))
+    test_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_test))
+    # train_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_train)) #when using keywords
+    # test_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_test))   #when using keywords
     train_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, train_tokens))
     test_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, test_tokens))
 
@@ -439,12 +338,14 @@ def grade_single_post(post, model, tokenizer):
     tokenizer = joblib.load(tokenizer)
     #prepare post
     post = clean_heb_text(post)
-    post = get_keyWords(post)
+    post = post.split()
+    print(post)
+    # post = get_lemmas(post)
+    # post = get_keyWords(post)
     post = ['[CLS]'] + post[:511]
     #AlephBERT post
     post_ids = tokenizer.convert_tokens_to_ids(post)
     post_ids = pad(post_ids, 512)
-    # post_ids = nn.utils.rnn.pad_sequence(post_ids, batch_first='pre', padding_value=0)
 
     #generate masks
     post_masks = [float(i > 0) for i in post_ids]
@@ -460,25 +361,13 @@ def grade_single_post(post, model, tokenizer):
 
         bert_predicted = (numpy_logits[:, 0] > 0.5)
         all_logits = (numpy_logits[:, 0])
+    return numpy_logits[:, 0]
+    # return float(bert_predicted)
 
-    return float(bert_predicted)
-
-
-
-
-    #confusion matrix
-    # conf_matrix = confusion_matrix(y_true=y_test, y_pred=y_pred)
-    # fig, ax = plt.subplots(figsize=(7.5, 7.5))
-    # ax.matshow(conf_matrix)
-    # plt.xlabel('Predictions')
-    # plt.ylabel('Actuals')
-    # plt.show()
 #======================================================================================================
 
 
 if __name__ == '__main__':
-    #clean_combined_eng_datasets()  # uncomment when datasets change, or when cleaning process changes
-    # training_combined_eng_datasets()  #uncomment when we want to redo training
     # *************** MANUAL CHECKS **********************
     # svm_model = 'combined_trained_model.pkl'
     # vectorizer = 'tfidf_vectorizer.pkl'
@@ -494,26 +383,40 @@ if __name__ == '__main__':
     # grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ", svm_model, vectorizer)
 
     #***********HEB DATA!******************************
-    # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
-    # # csv_cleaner(filename, heb=True)
-    # # filename = 'dataset_for_code_testing - Sheet1.csv'
-    # # csv_cleaner(filename, heb=True)
-    # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
+    filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
+    csv_cleaner(filename, heb=True)
+    clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
     # training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
-    model = 'BERT_model.pkl'
-    tokenizer = 'AlephBERT_tokenizer.pkl'
-    print(grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", model, tokenizer))
+    training_heb(clean_filename, model_filename='BERT_model_clean_6_16_aug3.pkl', tokenizer_filename='AlephBERT_tokenizer_clean_6_16_aug3.pkl')
+
+    # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
+    # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
+    # training_heb(clean_filename, model_filename='BERT_model_clean_20_16_aug2.pkl', tokenizer_filename='AlephBERT_tokenizer_clean_20_16_aug2.pkl')
+    #
+    # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
+    # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
+    # training_heb(clean_filename, model_filename='BERT_model_clean_20_16_aug3.pkl',
+    #              tokenizer_filename='AlephBERT_tokenizer_clean_20_16_aug3.pkl')
+
+    # model = 'BERT_model_clean_6_16_aug.pkl'
+    # tokenizer = 'AlephBERT_tokenizer_clean_6_16_aug.pkl'
+    # # print(grade_single_post("יש לך בעיה רצינית בהבנת הנושא - החיסון ( לא ניסוי לא ניסוי ) עבר בדיקות מחמירות של רשות הבריאות האמריקאית , וסתם קצת השכלה יא דבע - זאת הרשות הכי מחמירה בבדיקות של חיסונים ותרופות . אל לך תלמד קצת אהבל !! ליפני שאתה מביע דיעות ללא שום בסיס מדעי", model, tokenizer))
+    # # print(grade_single_post("ידוע לא מעט על פגיעה בבלוטת התריס ובלוטות הלימפה שליד מיד אחרי החיסון הראשון או השני", model, tokenizer))
+    # # print(grade_single_post("אין מחקר שאומר מה השפעות על פריון על ילדים שחלו בקורונה זה יתבהר בעוד שנים כאשר יגיעו לגיל המתאים. כרגע רק מתחילים מחקרים על השפעות קורונה על ילדים עיכוב התפתחות וצמיחה והשפעות נוספות זה מחקרים שהתוצאות יהיו עוד שנים", model, tokenizer))
+    # # print(grade_single_post("כיום הקורונה אינה פוגעת רק באנשים עם מחלות רקע קשה . מה גם שמחלות רקע לא הכוונה לאדם שעומד למות .", model, tokenizer))
+    # print(grade_single_post("אין כללים. כל גוף מגיב אחרת. זה קורונה.", model, tokenizer))
+    # print(grade_single_post("לרוב אזרחי העולם [הקורונה] זה בדיוק מה שזה- שפעת!", model, tokenizer))
+    # print(grade_single_post("מי שחלה מחוסן נגד הדבקות שניה", model, tokenizer))
+    # print(grade_single_post("גם מי שלא חוסן [עובר את המחלה בקלות], מניסיון. זה שפעת", model, tokenizer))
+
+    # first = backward_translate("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
+    # print(first)
+    # for i in range(5):
+    #     first = random_swap("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", n=2)
+    #     print(first)
 
 
-"""
-optional classifiers to add:
-1. random forest classifier (from sklearn)
-2. Multinomial Naive Bayes Algorithm (need to read more about it, we're not sure how it fits in). (from: https://www.analyticsvidhya.com/blog/2021/06/build-your-own-fake-news-classifier-with-nlp/)
-3. we have 5 different classifier examples in the article:
-https://www.researchgate.net/profile/Marten-Risius/publication/326405790_Automatic_Detection_of_Fake_News_on_Social_Media_Platforms/links/5b7df935a6fdcc5f8b5de39c/Automatic-Detection-of-Fake-News-on-Social-Media-Platforms.pdf
-(page 11)
-we want to create different functions for each classifier, and somehow work with the different results to get a more accurate analysis
-"""
+
 
 '''
 pages talking about covid and vaccines:
