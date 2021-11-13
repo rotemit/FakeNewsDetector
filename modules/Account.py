@@ -21,4 +21,3 @@ class Account:
         self.posts = posts_arr
 
 
-

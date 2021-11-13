@@ -62,7 +62,7 @@ def get_login_details():
     userName =  data['name']
     password =  data['password']
     print(data)
-    return 'data'
+    return {'result': (login(driver, userName, password))}
 
 if __name__ == '__main__':
     app.run(debug=True)

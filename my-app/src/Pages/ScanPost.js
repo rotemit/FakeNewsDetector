@@ -1,5 +1,6 @@
-import "./ScanPost.css";
+import "./ScanPost.scss";
 import React, { useState } from 'react';
+import { Loader, Form, SubmitButton, Input } from "./BasicComponents";
 
 export const ScanPost = () => {
   const [text, setText] = useState('');
@@ -9,23 +10,22 @@ export const ScanPost = () => {
 
   function Result() {
     return (
-      
            <table className='table'>
             <tr>
               <th >Category</th> 
-              <th >Value</th>
+              <th >Value</th> 
             </tr>
             <tr>
               <td >Trust result</td> 
-              <td >{(result.trust >= 0 ) ? result.trust  : 'N/A'}</td>
+              <td >{(result.trust >= 0 ) ? (Number(result.trust) * 100).toFixed(2) + '%' : 'N/A'}</td>
             </tr>
             <tr>
               <td >Machine result</td> 
-              <td >{(result.machine >= 0 ) ? result.machine  : 'N/A'}</td>
+              <td >{(result.machine >= 0 ) ? (Number(result.machine) * 100).toFixed(2) + '%'  : 'N/A'}</td>
             </tr>
             <tr>
-              <td >Semantic result</td> 
-              <td >{result.semantic}</td>
+              <td >Sentiment result</td> 
+              <td >{(result.semantic >= 0 ) ? (Number(result.semantic) * 100).toFixed(2) + '%'  : 'N/A'}</td>
             </tr>
            </table>
 
@@ -50,40 +50,41 @@ export const ScanPost = () => {
           })
       } 
   }
-  let total;
-  if (result.trust === -1) {
-    total = (Number(result.machine) + Number(result.semantic)) /2 *100;
-  } else if ((result.machine === -1)) {
-    total = (Number(result.trust) + Number(result.semantic)) /2 *100;
-  } else {
-     total = (Number(result.trust) + Number(result.machine) + Number(result.semantic)) / 3 * 100;
+  let total = 0;
+  let devide = 0;
+  if (result.trust !== -1) {
+    total += Number(result.trust);
+    devide++;
+  } 
+  if (result.machine !== -1) {
+    total += Number(result.machine);
+    devide++;
+  } 
+  if (result.semantic !== -1) {
+    total += Number(result.semantic);
+    devide++;
   }
-  const tot = total.toFixed(2);
+  const tot = (devide === 0 ? 'N/A' : (total / devide * 100).toFixed(2));
 
   return (
     <div className='screen'>
-      <div className='form'>
-        <div>
-
-        <div className='inputRaw'>
-          <input className='urlInput' value={text} placeholder="Post URL"  onChange={e => setText(e.target.value)} />   
-          <button class="ui button" type="submit" onClick={handleSubmit}>Submit</button>
+      <Form>
+        <div className='fields'>  
+          <Input label='Enter URL/text' value={text} onChange={e => setText(e.target.value)} />
+          <Input label='Number of posts' value={numOfPosts} onChange={e => setNumOfPosts(e.target.value)} />
+          <SubmitButton onSubmit={handleSubmit} />
         </div>
-        <div className='inputRaw'>
-          <label>How many posts do you wand to scan?</label>
-          <input className='urlInput' value={numOfPosts} placeholder="20"  onChange={e => setNumOfPosts(e.target.value)} />   
-        </div>
+  
         {isClicked ? 
           ((result.semantic) ? 
           (<>
             <Result />
-            <h1>Total: {tot}</h1>
+            <div className='total'>Total: {tot}%</div>
           </>) : 
-          (<div className='loader' />)) : null
+          (<Loader />)) : null
         }
-        </div>
           
-      </div>
+      </Form>
     </div>
   )
 }
