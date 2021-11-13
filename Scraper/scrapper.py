@@ -778,13 +778,13 @@ def scrap_one_post(driver, post_url, posts):
     # driver.get(post_url)
     time.sleep(2)
 
-    sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
-    click_on_all(driver, "//div[text()='See More']")
-    loops = 0
-    while sum != 0 and loops < 10:
-        sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
-        click_on_all(driver, "//div[text()='See More']")
-        loops += 1
+    # sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
+    # click_on_all(driver, "//div[text()='See More']")
+    # loops = 0
+    # while sum != 0 and loops < 10 and loops < comments/20:
+    #     sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
+    #     click_on_all(driver, "//div[text()='See More']")
+    #     loops += 1
 
     post_writer = driver.find_elements_by_xpath("//h2[@class='gmql0nx0 l94mrbxd p1ri9a11 lzcic4wl aahdfvyu hzawbc8m']")
     if len(post_writer) >0:
