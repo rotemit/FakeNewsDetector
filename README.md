@@ -20,38 +20,30 @@ Follow these steps to run the project:
 3. Install requirements:
 ```ruby
 (fakeNewsVenv) > pip install -r requirements.txt
-(fakeNewsVenv) > 
 ```
+4. Download chromedriver version 95.0.4638.69:
+https://chromedriver.storage.googleapis.com/index.html?path=95.0.4638.69/
+place the downloaded .exe file in the main project directory (under FakeNewsDetector)
 
-next, server.py->api.py
 
-Finally, run the client? via command line
+Next, run the server:
+```
+(fakeNewsVenv) > python api.py
+``` 
+*check if this needs to be inside venv
+
+
+Finally, open a new command line window and use it to run the client:
 ```ruby
-(fakeNewsVenv) > cd my-app
-(fakeNewsVenv) > nmp install
-(fakeNewsVenv) > npm start
+#from the main project folder, cd into my-app. (Without activated env)
+> cd my-app
+> npm install
+> npm start
 ```
+*npm install should only be done the first time you run the program
 
-The UI should open in your browser. Follow the instructions there to detect some Hebrew Fake News :)
+Open your browser, and navigate to URL:
+https://localhost:3000
 
-Finally, run pip install to the following libraries when the environment is activated:</br>
-pip install flask</br>
-pip install flask_cors</br>
-pip install facebook_scraper - אולי לא צריך</br>
-pip install selenium</br>
-pip install nltk</br>
-pip install deep_translator</br>
-pip install numpy</br>
-pip install pandas</br>
-pip install sklearn</br>
-pip install matplotlib</br>
-pip install tensorflow</br>
-pip install keras - לא בטוח, אבל אם כן אז גרסה 2.6</br>
-pip install gensim</br>
-pip install transformers</br>
-pip install torch</br>
-
-(optimally, when we finish the project try to run on a different computer and update readme accordingly)
-
-probably need to download YAP, if so add explanation about this.
+Follow the instructions on the page to detect some Hebrew Fake News :)
 
