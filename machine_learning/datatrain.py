@@ -1,38 +1,15 @@
 import csv
 import numpy as np
 import pandas as pd
-# import itertools
 from sklearn.model_selection import train_test_split
-# from sklearn.feature_extraction.text import TfidfVectorizer
-# from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.metrics import classification_report
 from machine_learning.stop_words import stop_words
 from machine_learning.yap_server import get_keyWords, get_lemmas, random_lemmas
-# from sklearn import svm
-# from sklearn import metrics
 import joblib
-# from sklearn.feature_extraction.text import HashingVectorizer
-# from sklearn import linear_model
-# from deep_translator import GoogleTranslator #pip installed
-# from machine_learning.heb_data_collector import get_group_posts
-# from sklearn.linear_model import LogisticRegressionCV
-# from nltk.stem import PorterStemmer
-# from nltk.stem import LancasterStemmer
-# from nltk.stem import WordNetLemmatizer
-# import matplotlib.pyplot as plt
-# import nltk
-# nltk.download('wordnet')
-#*********imports for deep learning************
-# from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.layers import Dense, Embedding, LSTM, Conv1D, MaxPool1D
-# from tensorflow.keras.optimizers import Adam
 import gensim
-
 from transformers import BertModel, BertTokenizerFast
 import torch.nn as nn
-# from pytorch_pretrained_bert import BertTokenizer, BertModel
 import torch
 import random
 
@@ -239,7 +216,7 @@ def training_heb(filename, model_filename, tokenizer_filename):
     #leave learning rate small, because we dont want to drastically change everything bert learned before
     LEARNING_RATE = 3e-6   #tried 0.001, 0.0001, 3e-6. all pretty much the same acc result
 
-    df['keywords'] = df.apply(lambda row: from_str_to_lst(row['lemmatized']), axis=1)
+    # df['keywords'] = df.apply(lambda row: from_str_to_lst(row['lemmatized']), axis=1)
     # X = df['keywords']
     X = df['clean_text'] #commented out when trying keywords
     labels = df['binary label']
@@ -383,11 +360,12 @@ if __name__ == '__main__':
     # grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ", svm_model, vectorizer)
 
     #***********HEB DATA!******************************
+    # filename = 'dataset_for_code_testing - Sheet1.csv'
     filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
-    csv_cleaner(filename, heb=True)
+    # csv_cleaner(filename, heb=True)
     clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
     # training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
-    training_heb(clean_filename, model_filename='BERT_model_clean_6_16_aug3.pkl', tokenizer_filename='AlephBERT_tokenizer_clean_6_16_aug3.pkl')
+    training_heb(clean_filename, model_filename='BERT_model_clean_6_16_aug4.pkl', tokenizer_filename='AlephBERT_tokenizer_clean_6_16_aug4.pkl')
 
     # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
     # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'

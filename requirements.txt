@@ -1,0 +1,13 @@
+flask
+flask_cors
+selenium
+nltk
+deep_translator
+numpy
+pandas
+sklearn
+tensorflow
+keras
+gensim
+transformers
+torch
