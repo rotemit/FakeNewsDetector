@@ -2,6 +2,7 @@ from Analyzer.analyzers import sentimentAnalysis, UTVAnalysis, machineLeaningAna
 from modules.Scan_result import ScanResult
 from modules.Post import Post
 
+
 ############ analysis manager ############
 
 def analyze_facebook(obj):
