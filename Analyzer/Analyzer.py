@@ -1,6 +1,5 @@
 from Analyzer.analyzers import sentimentAnalysis, UTVAnalysis, machineLeaningAnalyzer
 from modules.Scan_result import ScanResult
-from modules.AnalysisResult import AnalysisResult
 from modules.Post import Post
 
 ############ analysis manager ############

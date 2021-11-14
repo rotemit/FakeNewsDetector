@@ -11,9 +11,6 @@ from modules.Account import Account
 from modules.Post import Post
 import time
 from datetime import date
-from Analyzer.Analyzer import analyze_facebook
-import pprint
-import json
 from machine_learning.datatrain import BertBinaryClassifier
 
 """
@@ -29,10 +26,6 @@ name_of_page_1 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8
 name_of_page_2 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 embtmqzv fe6kdd0r mau55g9w c8b282yb hrzyx87i m6dqt4wy h7mekvxk hnhda86s oo9gr5id hzawbc8m']"
 about_group_fields = "//div[@class='dwo3fsh8 g5ia77u1 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv q9uorilb kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso l9j0dhe7 i1ao9s8h k4urcfbm']"
 to_english = "/?locale2=en_US"
-
-class json_encoder(json.JSONEncoder):
-    def default(self, o):
-        return o.__dict__
 
 """
     initiation of the chrome driver
@@ -910,8 +903,8 @@ if __name__ == '__main__':
 
     finish_sel(driver) #to finish with the driver
 
-    analyzed = analyze_facebook(post) #to analyze the something; this case the account
-    print(vars(analyzed))
+    # analyzed = analyze_facebook(post) #to analyze the something; this case the account
+    # print(vars(analyzed))
 
     # account = scrap_url(driver, "https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True)
     # group = scrap_url(driver, "https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True)
