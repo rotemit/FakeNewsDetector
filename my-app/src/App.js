@@ -2,6 +2,7 @@ import './App.scss';
 import {ScanPost} from './Pages/ScanPost'
 import {Login} from './Pages/Login'
 import { About } from './Pages/About';
+import { Contact } from './Pages/Contact';
 import React, { useState, useEffect } from "react";
 import background from "./image.jpeg";
 
@@ -33,10 +34,13 @@ const Header = () => {
         Login
       </Link>
       <Link href="/ScanPost" className="item">
-        Scan Post
+        Scan
       </Link>
       <Link href="/About" className="item">
         About
+      </Link>
+      <Link href="/Contact" className="item">
+        Contact
       </Link>
     </div>
   );
@@ -64,6 +68,9 @@ const App = () => {
   return (
     <div style={{ backgroundImage: `url(${background})` }}>
       <Header />
+      <Route path="/Contact">
+        <Contact />
+      </Route>
       <Route path="/About">
         <About />
       </Route>

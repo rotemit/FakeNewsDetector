@@ -2,6 +2,7 @@
 import "./Login.scss";
 import React, { useState } from 'react';
 import { Loader, Title, Input, Form, SubmitButton, Modal } from "./BasicComponents";
+import facebookIcon from '../facebook.png';
 
 
 export const Login = () => {
@@ -37,7 +38,9 @@ export const Login = () => {
             setName('');
             setPassword('');
             
-        } 
+        } else {
+            
+        }
     
     }
 
@@ -66,7 +69,11 @@ export const Login = () => {
     return (
         <div className='screen'>
             <Form>
-                <Title title='Welcome to our app!' />
+                <Title title='Welcome to Hebrew Fake News Analayzer!' />
+                <div className='image'>
+                    <img src={facebookIcon } className='icon' />
+                    <label className='label'>Facebook details</label>
+                </div>
                 <div className='fields'>
                     <Input label='User name' type='text' value={name} name="User name" placeholder="example@gmail.com" onChange={(e) => setName(e.target.value)} />
                     <Input label='Password' type='password' value={password} name="Password" onChange={(e) => setPassword(e.target.value)} />

@@ -4,9 +4,8 @@ import json
 from flask import Flask, request
 from flask_cors import CORS
 
-from machine_learning.scrap_posts import scrap_posts
 from Scraper.scrapper import scrap_url, init_sel, login
-from Analyzer.Analyzer import analyze_facebook
+from Analyzer.Analyzer import analyze_facebook, analyze_string
 import pandas as pd
 
 
@@ -26,9 +25,14 @@ def scrap_post(text, numOfPosts):
     print(userName)
     print(password)
     driver = init_sel() #to init the driver
-    if not login(driver, userName, password):
-        login(driver, userName, password) #login in - return true on success, false otherwise.
+    # if not login(driver, userName, password):
+    #     login(driver, userName, password) #login in - return true on success, false otherwise.
 
+    first_chars = text[0:4]
+    print('first chars', first_chars)
+    if first_chars!='http':
+        print('first chars', first_chars)
+        return vars(analyze_string(text))
     print("start")
     global post
     account = scrap_url(driver, text, posts=int(numOfPosts), loging_in=True)
