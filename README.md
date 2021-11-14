@@ -1,17 +1,38 @@
 # FakeNewsDetector
 
-Hello! Welcome to our FakeNewsDetector, the ultimate tool for Fake News Detection in Hebrew politics on Facebook,
-created as a final project for our Bachelor's degree in Computer Science.
+Hello! Welcome to our FakeNewsDetector, the ultimate tool for Fake News Analysis in Hebrew Facebook posts regarding Covid-19. This analyzer was created for our undergraduate project in computer science.
 
-In order to run our project, you will need to git clone the project:
+Follow these steps to run the project:
+1. Download project:
+```ruby
+#Clone the project
+> git clone https://github.com/rotemit/FakeNewsDetector.git
+#cd into the project folder
+> cd FakeNewsDetector
+```
+2. Create and activate virtual environment:
+```ruby
+#Create
+> py -3 -m venv fakeNewsVenv
+#Activate
+> fakeNewsVenv\Scripts\activate
+```
+3. Install requirements:
+```ruby
+(fakeNewsVenv) > pip install -r requirements.txt
+(fakeNewsVenv) > 
+```
 
-Then cd into the project folder:
+next, server.py->api.py
 
-Then you will need to create a virtual environment, in the project folder write the following command:
-py -3 -m venv (environment name)
+Finally, run the client? via command line
+```ruby
+(fakeNewsVenv) > cd my-app
+(fakeNewsVenv) > nmp install
+(fakeNewsVenv) > npm start
+```
 
-Now you will need to activate it:
-(environment name)\Scripts\activate
+The UI should open in your browser. Follow the instructions there to detect some Hebrew Fake News :)
 
 Finally, run pip install to the following libraries when the environment is activated:</br>
 pip install flask</br>
