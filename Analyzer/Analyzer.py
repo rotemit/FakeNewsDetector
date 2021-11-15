@@ -40,6 +40,9 @@ def analyze_post(post_obj):
 
 
 def analyze_string(txt):
+    if txt is None or txt == "":
+        return ScanResult("Text", -1, -1, -1)
+
     sentimentAnalyzer_result = sentimentAnalysis.analyze_sentiments([txt])
     machine_learning_result = machineLeaningAnalyzer.grading_posts([txt])
     return ScanResult("Text", sentimentAnalyzer_result, machine_learning_result, -1)

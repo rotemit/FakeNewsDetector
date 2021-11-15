@@ -19,53 +19,90 @@ from machine_learning.datatrain import BertBinaryClassifier
 is_logged_in = False
 year_not_registered = "//*[contains(text(),'Born on ') or contains(text(),'No posts available')]"
 friendship_duration_xpath = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 pfnyh3mw jifvfom9 gs1a9yip owycx6da btwxx1t3 discj3wi b5q2rw42 lq239pai mysgfdmx hddg9phg']"
-# friendship_duration_xpath = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh oo9gr5id hzawbc8m']"
 name_of_page = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t g5gj957u d2edcug0 p01isnhg rj1gh0hx dtpq6qua p8fzw8mz pcp91wgn ihqw7lf3 ipjc6fyt']"
 name_of_group = "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t g5gj957u d2edcug0 hpfvmrgz on77hlbc buofh1pr o8rfisnq ph5uu5jm b3onmgus ihqw7lf3 ecm0bbzt']"
 name_of_page_1 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 l1jc4y16 fe6kdd0r mau55g9w c8b282yb rwim8176 mhxlubs3 p5u9llcw hnhda86s oo9gr5id oqcyycmt']"
 name_of_page_2 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 embtmqzv fe6kdd0r mau55g9w c8b282yb hrzyx87i m6dqt4wy h7mekvxk hnhda86s oo9gr5id hzawbc8m']"
 about_group_fields = "//div[@class='dwo3fsh8 g5ia77u1 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv q9uorilb kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso l9j0dhe7 i1ao9s8h k4urcfbm']"
 to_english = "/?locale2=en_US"
+MAX_POST_LEN = 256
+
+
+# ============================================ Driver ===============================================
 
 """
     initiation of the chrome driver
+    
+    In case of a problem duo to chrome driver version:
+    Check which version of chrome you have in this link:
+    https://www.whatismybrowser.com/detect/what-version-of-chrome-do-i-have. 
+    Then, download  the chromedriver with your version from: https://chromedriver.chromium.org/downloads
+    (for Windows download the win32 type of file).
+    Extract the zip file and place the .exe file in the main project directory (under FakeNewsDetector)
 """
 def init_sel():
     options = webdriver.ChromeOptions()
     options.add_argument('headless') #so we will not see the open window
-    PATH = "C:\Program Files (x86)\chromedriver.exe"
+    PATH = "chromedriver.exe"
     driver = webdriver.Chrome(PATH, options=options)
     driver.maximize_window()
     return driver
 
+"""
+    Simply incharged of closing the driver.
+"""
 def finish_sel(driver):
     driver.quit()
+
+
+# ============================================ Login ===============================================
+
 """
     login in into Facebook with the giver email and password
     :return True if logged in succefully, else return False
 """
 def login(driver, email, password):
+
+    # making sure the user actually gave real email and password
+    if email is None or email == "" or password is None or password == "":
+        return False
+
+    # getting into Facebook
     driver.get("https://www.facebook.com")
+
+    # entering email
     search_email = driver.find_element_by_id("email")
     time.sleep(2)
     search_email.send_keys(email)
+
+    # entering password
     search_pass = driver.find_element_by_id("pass")
-    time.sleep(3)
+    time.sleep(2)
     search_pass.send_keys(password)
-    time.sleep(4)
+
+    # click 'Connect'
+    time.sleep(2)
     search_button = redirect_by_xpath(driver, "//div[@class='_6ltg']")
     if search_button is None:
         return False
     search_button[0].click()
     time.sleep(3)
+
+    # if the url is still of login page - means we couldn't connect Facebook,
+    # then return False, since user-name or password is incorrect.
     if "login" in driver.current_url:
         return False
+
     global is_logged_in
     is_logged_in = True
+
     return True
 
+# ============================================ Tools ===============================================
 
-# not sure why we need this, but we'll see
+"""
+    This method preforms background click, usually needed in case of redirection.
+"""
 def background_click(driver):
     time.sleep(0.5)
     actions = ActionChains(driver)
@@ -80,9 +117,10 @@ def background_click(driver):
    the method, either works or return False. 
 """
 def redirect(driver, next_page, initial_click=True):
-    # if initial_click is true we preform a background click - not sure why
+    # if initial_click is true we preform a background click
     if initial_click:
         background_click(driver)
+
     try:
         # we try to wait until the element we want to click to move to the next page will becaome clickable,
         # if after 7 second it's not clickable ( or simply doesn't exists) we return False;
@@ -102,7 +140,7 @@ def redirect(driver, next_page, initial_click=True):
 
 """
     this method helps getting an element by its xpath, and it can wait until it's appear, unlike the built in method.
-    can cause errors, if elements is not found after the waited time.
+    If elements is not found after the waited time returns None.
 """
 def redirect_by_xpath(driver, xpath):
     time.sleep(1)
@@ -119,9 +157,89 @@ def redirect_by_xpath(driver, xpath):
     finally:
         print(xpath)
 
+"""
+    This method helps us to scroll to the bottom of the page,
+    and its return the last element with the given xpath
+"""
+def scroll_to_bottom(driver, elements_xpath):
+    # using the method of "send_keys" to type the END key to get to the end of the page.
+    actions = ActionChains(driver)
+    elements = driver.find_elements_by_xpath(elements_xpath)
+    old_elements_amount = len(elements)
+    while True:
+        time.sleep(2)
+        actions.send_keys(Keys.END)
+        actions.perform()
+        elements = driver.find_elements_by_xpath(elements_xpath)
+        for elem in elements:
+            print(elem.text)
+        if len(elements) == old_elements_amount:
+            break
+        old_elements_amount = len(elements)
+    return elements[len(elements) - 1].text
+
+
+# ============================================ Converters ===============================================
+
+# converter of string of month to number
+def month_converter(month, short=False):
+    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+              'August', 'September', 'October', 'November', 'December']
+    if short:
+        months = ['Jan,', 'Feb,', 'Mar,', 'Apr,', 'May,', 'Jun,', 'Jul,',
+                  'Aug,', 'Sep,', 'Oct,', 'Nov,', 'Dec,']
+    return months.index(month) + 1
+
+
+# change from date of type <MonthName DD, YYYY> to <DD MonthName YYYY>
+def reformat_date(date):
+    date_arr = date.replace(",", "").split(' ')
+    return ' '.join([date_arr[1], date_arr[0], date_arr[2]])
+
+
+# change from human number, such as 10K - to actual decimal number, such as 10000
+def int_from_human_format(x):
+    if type(x) == int:
+        return x
+    if 'K' in x:
+        if len(x) > 1:
+            return int(x.replace('K', '')) * 1000
+        return 1000
+    if 'M' in x:
+        if len(x) > 1:
+            return int(x.replace('M', '')) * 1000000
+        return 1000000
+    if 'B' in x:
+        return int(x.replace('B', '')) * 1000000000
+    return 1000000000
+
+
+# change from human number of days, such as 10w - to actual decimal number, such as 10*7=70
+def days_from_human_format(x):
+    if 'm' in x:
+        return float(x.replace('m', '')) * (1/1440)
+    if 'h' in x:
+        return float(x.replace('h', '')) * (1/24)
+    if 'd' in x:
+        return float(x.replace('d', ''))
+    if 'w' in x:
+        return float(x.replace('w', '')) * 7
+    if 'y' in x:
+        return float(x.replace('y', '')) * 356
+    return x
+
+
+# making sure the given url doesn't ends with '/'
+def check_url(url):
+    if url[len(url)-1] == '/':
+        return  url[0:len(url)-1]
+    return url
+
+
+# ============================================ Account ===============================================
 
 """
-    this method extract the number of total friends of the page it is on
+    This method extract the number of total friends of the page it is on
 """
 def extract_total_friends(driver):
     if is_logged_in:
@@ -138,10 +256,14 @@ def extract_total_friends(driver):
 
 
 """
-    this method extract the profile summary of the page it is on,
+    This method extract the profile summary of the page it is on,
     which consists of details the user chose to share, user's total friends, and the age of the user's account.
 """
-def extract_profile_summary(driver):
+def scrap_about(driver):
+    if is_logged_in:
+        time.sleep(2)
+        redirect(driver, "About")
+
     try:
         total_friends = extract_total_friends(driver)
     except:
@@ -152,31 +274,29 @@ def extract_profile_summary(driver):
         age_of_account = 0
     return total_friends, age_of_account
 
-#scraping the "about" page
-def scrap_about(driver):
-    if is_logged_in:
-        time.sleep(2)
-        redirect(driver, "About")
-    return extract_profile_summary(driver)
-
 
 """
-    this method extract the friendship duration of the root user with the current page.
+    This method extract the friendship duration of the root user with the current page.
 """
 def extract_friendship_duration(driver):
     if not is_logged_in:
         return 0
     upper_navigation_bar = redirect_by_xpath(driver, "//div[@class='ku2zlfd4 q3mryazl']/div/div")
+
+    # Usually means it is not account, but a page we are in
     if upper_navigation_bar is None:
         return None
     time.sleep(2)
     try:
         upper_navigation_bar[len(upper_navigation_bar) - 1].click()
+    # Usually means it is not account, but a page we are in
     except:
         return None
+
     isFriend = redirect(driver, 'See Friendship', False)
     if isFriend is False:
         return 0
+
     all_common_fields = redirect_by_xpath(driver, friendship_duration_xpath)
     if all_common_fields is None:
         return 0
@@ -188,7 +308,7 @@ def extract_friendship_duration(driver):
     return 0
 
 """
-    this method extract the the amount of mutual friend the user has with the account the driver is in.
+    This method extract the the amount of mutual friend the user has with the account the driver is in.
 """
 def extract_mutual_friends(driver, is_friend):
     all_fields = []
@@ -212,29 +332,7 @@ def extract_mutual_friends(driver, is_friend):
 
 
 """
-    this method helps us to scroll to the bottom of the page,
-    and its return the last element with the given xpath
-"""
-def scroll_to_bottom(driver, elements_xpath):
-    # using the method of "send_keys" to type the END key to get to the end of the page.
-    actions = ActionChains(driver)
-    elements = driver.find_elements_by_xpath(elements_xpath)
-    old_elements_amount = len(elements)
-    while True:
-        time.sleep(2)
-        actions.send_keys(Keys.END)
-        actions.perform()
-        elements = driver.find_elements_by_xpath(elements_xpath)
-        for elem in elements:
-            print(elem.text)
-        if len(elements) == old_elements_amount:
-            break
-        old_elements_amount = len(elements)
-    return elements[len(elements) - 1].text
-
-
-"""
-    this method calculate the age of an account by substracting the date enrolled from today date
+    This method calculate the age of an account by substracting the date enrolled from today date
 """
 def calculate_age(date_joined, short=False):
     date_arr = date_joined.split(' ')
@@ -245,18 +343,8 @@ def calculate_age(date_joined, short=False):
     return number_of_days.days
 
 
-# converter of string of month to number
-def month_converter(month, short=False):
-    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-              'August', 'September', 'October', 'November', 'December']
-    if short:
-        months = ['Jan,', 'Feb,', 'Mar,', 'Apr,', 'May,', 'Jun,', 'Jul,',
-                  'Aug,', 'Sep,', 'Oct,', 'Nov,', 'Dec,']
-    return months.index(month) + 1
-
-
 """
-    this method extracting the date of creation of an accout, which is not the root user.
+    This method extracting the date of creation of an accout, which is not the root user.
     the method get the date by going over the posts of the user.
     it beggin in the middle, check if the string: "No posts available" or the string "Born on" is in there.
     it try to find the yearof creation by alwayes go in the middle until finding the year of creation.
@@ -292,11 +380,53 @@ def get_age_of_account(driver):
     # we assume the creation if January 1st of the found year
     return calculate_age("1 January " + str(left))
 
-# change from date of type <MonthName DD, YYYY> to <DD MonthName YYYY>
-def reformat_date(date):
-    date_arr = date.replace(",", "").split(' ')
-    return ' '.join([date_arr[1], date_arr[0], date_arr[2]])
 
+"""
+    This method gather all the information about an account
+"""
+def scrap_account(driver, account_url):
+
+    # if the user is logged in, we simply bring the driver to the given account url
+    # if not, we cannot be sure Facebook will be in English,
+    # so we add suffix for the url so we get the English version of Facebook
+    # account_url = check_url(account_url)
+    if is_logged_in:
+        driver.get(account_url)
+    else:
+        driver.get(account_url + to_english)
+    time.sleep(2)
+
+    # getting the name of the given account url
+    try:
+        name = driver.find_element_by_xpath("//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
+        user_name = name.text
+    except:
+        return None
+
+    # if the user is logged in, then they could be friends,
+    # so we will want to find for how long they were friends and how many mutual friends they have.
+    # if the user is not logged in, we consider those arguments to be 0.
+    friendship_duration = 0
+    mutual_friends = 0
+    if is_logged_in:
+        friendship_duration = extract_friendship_duration(driver)
+        if friendship_duration is None:
+            return None
+        friendship_duration = int(friendship_duration)
+        mutual_friends = extract_mutual_friends(driver, friendship_duration > 0)
+
+    if is_logged_in:
+        driver.get(account_url)
+    else:
+        driver.get(account_url + to_english)
+    time.sleep(2)
+
+    total_friends, age_of_account = scrap_about(driver)
+
+    return Account(user_name, total_friends, age_of_account, friendship_duration, mutual_friends)
+
+
+# ============================================ Page ===============================================
 
 """
     This method extract the age of the page the driver is in.
@@ -328,35 +458,6 @@ def get_age_of_page(driver):
             return calculate_age(new_date, False)
     return 0
 
-# change from human number, such as 10K - to actual decimal number, such as 10000
-def int_from_human_format(x):
-    if type(x) == int:
-        return x
-    if 'K' in x:
-        if len(x) > 1:
-            return int(x.replace('K', '')) * 1000
-        return 1000
-    if 'M' in x:
-        if len(x) > 1:
-            return int(x.replace('M', '')) * 1000000
-        return 1000000
-    if 'B' in x:
-        return int(x.replace('B', '')) * 1000000000
-    return 1000000000
-
-
-def days_from_human_format(x):
-    if 'm' in x:
-        return float(x.replace('m', '')) * (1/1440)
-    if 'h' in x:
-        return float(x.replace('h', '')) * (1/24)
-    if 'd' in x:
-        return float(x.replace('d', ''))
-    if 'w' in x:
-        return float(x.replace('w', '')) * 7
-    if 'y' in x:
-        return float(x.replace('y', '')) * 356
-    return x
 
 """
     This method extract the number of followers, number of likes
@@ -414,101 +515,6 @@ def get_page_numbers(driver):
 
 
 """
-    This method extract the age of the group the driver is in.
-"""
-def get_age_of_group(driver):
-    fields = driver.find_elements_by_xpath(about_group_fields)
-    for field in fields:
-        if 'History' in field.text:
-            hist_arr = field.text.split('\n')
-            date_arr = hist_arr[1].replace(".", "").split(' ')
-            date = ' '.join(date_arr[3:6])
-            new_date = reformat_date(date)
-            return calculate_age(new_date)
-    return 0
-
-
-"""
-    this method extract the number of account that are in the group that driver is in.
-"""
-def get_friends_num_of_group(driver):
-    fields = driver.find_elements_by_xpath(about_group_fields)
-    for field in fields:
-        if "total members" in field.text:
-            friends_arr = field.text.split(' ')
-            return int(friends_arr[0].replace(',', ''))
-
-
-"""
-    This method extract the number of the user's friends that are in the group the driver is in.
-"""
-def get_mutuals_group(driver):
-    elementa = driver.find_elements_by_xpath("//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh m9osqain']")
-    for elem in elementa:
-        if 'friends' in elem.text:
-            arr_text = elem.text.split(' ')
-            for i, word in enumerate(arr_text):
-                try:
-                    x = int(word.replace(',', ''))
-                    return x+i-1
-                except:
-                    continue
-    return 0
-
-
-# making sure the given url doesn't ends with '/'
-def check_url(url):
-    if url[len(url)-1] == '/':
-        return  url[0:len(url)-1]
-    return url
-
-
-"""
-    This method gather all the information about an account
-"""
-def scrap_account(driver, account_url):
-
-    # if the user is logged in, we simply bring the driver to the given account url
-    # if not, we cannot be sure Facebook will be in English,
-    # so we add suffix for the url so we get the English version of Facebook
-    # account_url = check_url(account_url)
-    if is_logged_in:
-        driver.get(account_url)
-    else:
-        driver.get(account_url + to_english)
-    time.sleep(2)
-
-    # getting the name of the given account url
-    try:
-        name = driver.find_element_by_xpath("//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
-        user_name = name.text
-    except:
-        return None
-
-    # if the user is logged in, then they could be friends,
-    # so we will want to find for how long they were friends and how many mutual friends they have.
-    # if the user is not logged in, we consider those arguments to be 0.
-    friendship_duration = 0
-    mutual_friends = 0
-    if is_logged_in:
-        friendship_duration = extract_friendship_duration(driver)
-        if friendship_duration is None:
-            return None
-        friendship_duration = int(friendship_duration)
-        mutual_friends = extract_mutual_friends(driver, friendship_duration > 0)
-
-    if is_logged_in:
-        driver.get(account_url)
-    else:
-        driver.get(account_url + to_english)
-    time.sleep(2)
-
-    total_friends, age_of_account = scrap_about(driver)
-
-    return Account(user_name, total_friends, age_of_account, friendship_duration, mutual_friends)
-
-
-"""
     this method gather all the information of a given page.
 """
 def scrap_page(driver, page_url):
@@ -532,6 +538,7 @@ def scrap_page(driver, page_url):
     # if we can, is either because the user is logged in, or because the page allow unsucribeds to see it (such as theShadow)
     # there are to options of title for page - Hebrew page and English page
     try:
+
         # trying first option for name
         name = driver.find_element_by_xpath(
             "//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t g5gj957u d2edcug0 hpfvmrgz on77hlbc buofh1pr o8rfisnq ph5uu5jm b3onmgus ihqw7lf3 ecm0bbzt']")
@@ -575,9 +582,53 @@ def scrap_page(driver, page_url):
     return Page(page_name, page_age, followers, likes, mutual_friends)
 
 
+# ============================================ Group ===============================================
 
 """
-    this method gathers all the information of a given group.
+    This method extract the age of the group the driver is in.
+"""
+def get_age_of_group(driver):
+    fields = driver.find_elements_by_xpath(about_group_fields)
+    for field in fields:
+        if 'History' in field.text:
+            hist_arr = field.text.split('\n')
+            date_arr = hist_arr[1].replace(".", "").split(' ')
+            date = ' '.join(date_arr[3:6])
+            new_date = reformat_date(date)
+            return calculate_age(new_date)
+    return 0
+
+
+"""
+    this method extract the number of account that are in the group that driver is in.
+"""
+def get_friends_num_of_group(driver):
+    fields = driver.find_elements_by_xpath(about_group_fields)
+    for field in fields:
+        if "total members" in field.text:
+            friends_arr = field.text.split(' ')
+            return int(friends_arr[0].replace(',', ''))
+
+
+"""
+    This method extract the number of the user's friends that are in the group the driver is in.
+"""
+def get_mutuals_group(driver):
+    elementa = driver.find_elements_by_xpath("//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v knj5qynh m9osqain']")
+    for elem in elementa:
+        if 'friends' in elem.text:
+            arr_text = elem.text.split(' ')
+            for i, word in enumerate(arr_text):
+                try:
+                    x = int(word.replace(',', ''))
+                    return x+i-1
+                except:
+                    continue
+    return 0
+
+
+"""
+    This method gathers all the information of a given group.
 """
 def scrap_group(driver, group_url):
 
@@ -606,6 +657,8 @@ def scrap_group(driver, group_url):
     return Group(group_name, group_age, friends_num, mutuals)
 
 
+# ============================================ Posts ===============================================
+
 """
     This method helps us scroll over posts of the the account the driver is in.
     elements_xpath - the xpath of posts
@@ -623,7 +676,6 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
     text_elements = driver.find_elements_by_xpath(elements_xpath_text)
     background_elements = driver.find_elements_by_xpath(elements_xpath_background)
     old_elements_amount = len(text_elements) + len(background_elements)
-
     while counter < num:
         time.sleep(2)
         actions.send_keys(Keys.END)
@@ -631,7 +683,6 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
 
         text_elements = driver.find_elements_by_xpath(elements_xpath_text)
         background_elements = driver.find_elements_by_xpath(elements_xpath_background)
-
         for post in text_elements:
             # if there is actual text in the post
             if post.text != "":
@@ -639,7 +690,7 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
                 # we click it to get the full text of the post.
                 if "See More" in post.text:
                     try:
-                        more = redirect_by_xpath("//div[text()='See More']") #TODO: prefection it
+                        more = redirect_by_xpath("//div[text()='See More']")
                         # more[0].click()
                         # more = post.find_element_by_xpath("//div[text()='See More']")
                         if more is not None:
@@ -649,7 +700,7 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
                 # replacing all new-lines in post to spaces
                 # and inserting the post to the given array if not already there
                 text = post.text.replace('\n', ' ')
-                if text not in arr and text != '' and len(text) < 256:
+                if text not in arr and text != '' and len(text) < MAX_POST_LEN:
                     arr.insert(index, text)
                     index += 1
                     counter += 1
@@ -659,7 +710,7 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
             # we click it to get the full text of the post.
             if "See More" in post.text:
                 try:
-                    more = redirect_by_xpath("//div[text()='See More']") #TODO: prefection it
+                    more = redirect_by_xpath("//div[text()='See More']")
                     # more[0].click()
                     # more = post.find_element_by_xpath("//div[text()='See More']")
                     if more is not None:
@@ -680,114 +731,47 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
     return arr
 
 """
-    this method extract from given account its posts by calling to scroll_over_posts function
+    This method extract from given account its posts by calling to scroll_over_posts function
     num - the number of posts to extract
 """
-def scrap_posts(driver, account_url, num):
-    driver.get(account_url)
+def scrap_posts(driver, url, num):
+
+    url = check_url(url)
+    if is_logged_in:
+        driver.get(url)
+    else:
+        driver.get(url + to_english)
     time.sleep(2)
+
     arr = []
-    while len(arr) < num:
-
-        arr = scroll_over_posts(driver, "//div[@class='kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q']", "//div[@class='sfj4j7ms pvbba8z0 rqr5e5pd dy7m38rt j7igg4fr']", num, arr)
-        # arr = scroll_over_posts(driver, "//div[@class='sfj4j7ms pvbba8z0 rqr5e5pd dy7m38rt j7igg4fr']", num, arr,"Background")
-        # scroll_over_posts(driver, "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v b1v8xokw oo9gr5id hzawbc8m']", num, arr)
-        # scroll_over_posts(driver, "//div[@class='rq0escxv l9j0dhe7 du4w35lb hybvsw6c io0zqebd m5lcvass fbipl8qg nwvqtn77 k4urcfbm ni8dbmo4 stjgntxs sbcfpzgs']", "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v b1v8xokw oo9gr5id hzawbc8m']", num, arr)
-
+    counter = 0
+    MAX_LOOPS = num*5
+    while len(arr) < num and counter < MAX_LOOPS:
+        arr = scroll_over_posts(driver, "//div[@class='kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q']",
+                                    "//div[@class='sfj4j7ms pvbba8z0 rqr5e5pd dy7m38rt j7igg4fr']", num, arr)
+        counter += 1
     return arr
 
-def scrap_comments(driver, num=0):
-    comments = []
-    post_comments = driver.find_elements_by_xpath("//div[@class='cwj9ozl2 tvmbv18p']/ul/li")
-    arr_index = 0
-    for i, comm in enumerate(post_comments):
-        print(comm.text)
-        lines = comm.text.split('\n')
-        writer = lines[0]
-        text = lines[1]
-        likes = 0
-        age = 0
-        start_text = 1
-        for j, line in enumerate(lines):
-            if "Reply to" in line or line.endswith("Reply"):
-                break
-            if "Like" in line:
-                try:
-                    likes = int(lines[j-1])
-                    text = ' '.join(lines[start_text:j-1])
-                except:
-                    likes = 0
-                    text = ' '.join(lines[start_text:j])
-            if "Share" in line or "Reply" in line:
-                age_arr = line.split(' ')
-                if is_logged_in:
-                    age = age_arr[len(age_arr)-1]
-                    if age == "Edited":
-                        age = age_arr[len(age_arr)-2]
-                    age = days_from_human_format(age)
-                else:
-                    try:
-                        likes = int(lines[j - 1])
-                        text = ' '.join(lines[start_text:j - 1])
-                    except:
-                        likes = 0
-                        text = ' '.join(lines[start_text:j])
-                    age = days_from_human_format(age_arr[2])
-                if(len(lines) > j+1):
-                    writer = lines[j+1]
-                    start_text = j+2
-                if text == "" or len(text) >= 256 or text is None: #for yap. length must be less than 256
-                   continue
-                comments.insert(arr_index, {"Writer": writer, "Text": text, "Likes": likes, "Age": age})
-                arr_index += 1
-
-        if arr_index >= num:
-            break
-
-    return comments
-
-def click_on_all(driver, element_xpath):
-    elements = driver.find_elements_by_xpath(element_xpath)
-    print(len(elements))
-    for elem in elements:
-        # try:
-        #     elem.click()
-        # except:
-        try:
-            webdriver.ActionChains(driver).move_to_element(elem).click(elem).perform()
-        except:
-            print("couldn't click on element")
-        time.sleep(1)
-    return len(elements)
-
-
+"""
+    This method gathers all the information of a given one post.
+"""
 def scrap_one_post(driver, post_url, posts):
     post_url = check_url(post_url)
     if is_logged_in:
         driver.get(post_url)
     else:
         driver.get(post_url + to_english)
-
-    # driver.get(post_url)
     time.sleep(2)
 
-    # sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
-    # click_on_all(driver, "//div[text()='See More']")
-    # loops = 0
-    # while sum != 0 and loops < 10 and loops < comments/20:
-    #     sum = click_on_all(driver, "//span[@class='j83agx80 fv0vnmcu hpfvmrgz']")
-    #     click_on_all(driver, "//div[text()='See More']")
-    #     loops += 1
-
+    # Getting the name of the writer of the post
     post_writer = driver.find_elements_by_xpath("//h2[@class='gmql0nx0 l94mrbxd p1ri9a11 lzcic4wl aahdfvyu hzawbc8m']")
     if len(post_writer) >0:
         writer = post_writer[0].text
-        print("writer is: " + writer)
     else:
         writer = None
 
+    # Getting the content of the post
     post_content = driver.find_elements_by_xpath("//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d3f4x2em fe6kdd0r mau55g9w c8b282yb iv3no6db jq4qci2q a3bd9o3v b1v8xokw oo9gr5id hzawbc8m']")
-
     content = ""
     if len(post_content) > 0:
         for cont in post_content:
@@ -807,9 +791,10 @@ def scrap_one_post(driver, post_url, posts):
 
     if content == "":
         content = None
-    elif len(content) > 256:
-        return "The post it too long. Maximum words is 256."
-    # comments = scrap_comments(driver, comments)
+    elif len(content) > MAX_POST_LEN:
+        return "The post it too long. Maximum words is " + str(MAX_POST_LEN) + "."
+
+    # Getting the account of whom wrote the post
     account = None
     url_account = ""
     if writer is not None and "group" in post_url:
@@ -822,7 +807,6 @@ def scrap_one_post(driver, post_url, posts):
 
         writer_page_btn = driver.find_elements_by_xpath("//span[@class='nc684nl6']")
         url_account = driver.current_url
-        print(url_account)
         url_arr = url_account.split('/')
         myUser = ""
         for i, cell in enumerate(url_arr):
@@ -830,14 +814,12 @@ def scrap_one_post(driver, post_url, posts):
                 myUser = "/".join(url_arr[i+1:])
                 break
         if myUser != "":
-            print(myUser)
             url_account = "https://www.facebook.com/" + myUser
     else:
         url_account =  post_url.split("posts")[0]
 
     if url_account != "":
         url_account = check_url(url_account)
-        print(url_account)
         account = scrap_account(driver, url_account)
         if account is None:
             account = scrap_page(driver, url_account)
@@ -845,10 +827,24 @@ def scrap_one_post(driver, post_url, posts):
         if account is not None:
             user_posts = scrap_posts(driver, url_account, posts)
             account.set_posts(user_posts)
-        print(account)
+
     return Post(writer, content, None, account)
 
 
+# ============================================ Scraping ===============================================
+
+"""
+    This is the main method, from which it called the other methods.
+    It gets 4 arguments:
+    - driver: the driver which we are working on.
+    - url: the url of what we are going to scrap.
+    - posts: the amount of posts we are going to scrap from facebook.
+    - loging_in: boolean of either we are logged in or not (for reassureness).
+    
+    The method either returns a Facebook Object such as: Account, Page, Group or Post,
+    or returns string that describes the error.
+    
+"""
 def scrap_url(driver, url, posts=0, loging_in=False):
     global is_logged_in
     is_logged_in = loging_in
@@ -870,7 +866,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
         group.set_posts(group_posts)
         return group
 
-    else:
+    elif loging_in:
         account = scrap_account(driver, url) #trying to scrap account
         # scarpping a page
         if account is None:
@@ -881,28 +877,39 @@ def scrap_url(driver, url, posts=0, loging_in=False):
                 page_posts = scrap_posts(driver, url, posts)
                 page.set_posts(page_posts)
                 return page
-
         # scarpping an account
         else:
             account_posts = scrap_posts(driver, url, posts)
             account.set_posts(account_posts)
             return account
+    else:
 
-
-
+        page = scrap_page(driver, url)
+        if page is None:
+            account = scrap_page(driver, url)
+            if account is None:
+                return "Make sure the url is of valid post, group, page or account in Facebook"
+            else:
+                account_posts = scrap_posts(driver, url, posts)
+                account.set_posts(account_posts)
+                return account
+        else:
+            page_posts = scrap_posts(driver, url, posts)
+            page.set_posts(page_posts)
+            return page
 
 
 if __name__ == '__main__':
 
     driver = init_sel() #to init the driver
     # if not login(driver, "ofrishani10@walla.com", "Ls5035"):
-    login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
+    # login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
 
     # account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
-    post = scrap_url(driver, "https://www.facebook.com/gilad.agam/posts/2373750039321151", posts=20, loging_in=True) #to scrap something; this case an account
+    page = scrap_url(driver, "https://www.facebook.com/politicallycorret/posts/4824497954277882", posts=20, loging_in=False) #to scrap something; this case an account
 
     finish_sel(driver) #to finish with the driver
-
+    print(page)
     # analyzed = analyze_facebook(post) #to analyze the something; this case the account
     # print(vars(analyzed))
 
