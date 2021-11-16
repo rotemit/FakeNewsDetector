@@ -14,7 +14,7 @@ def analyze_sentiments(posts):
 
     # calculate rate
     potentialFakeRate = potentialFakePostsNum / postsNum
-    potentialFakeRate = potentialFakeRate
+    potentialFakeRate = 1- potentialFakeRate
     return potentialFakeRate
 
 # check if a post might be fake by analyzing it's polarity
