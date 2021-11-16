@@ -855,6 +855,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
         one_post = scrap_one_post(driver, url, posts)
         if one_post is None:
             return "Something went wrong with the post. Please try again."
+        print(one_post)
         return one_post
 
     # scarpping a group
@@ -864,6 +865,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             return "Something went wrong with the group. Please try again."
         group_posts = scrap_posts(driver, url, posts)
         group.set_posts(group_posts)
+        print(group)
         return group
 
     elif loging_in:
@@ -876,11 +878,13 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             else:
                 page_posts = scrap_posts(driver, url, posts)
                 page.set_posts(page_posts)
+                print(page)
                 return page
         # scarpping an account
         else:
             account_posts = scrap_posts(driver, url, posts)
             account.set_posts(account_posts)
+            print(account)
             return account
     else:
 
@@ -892,10 +896,12 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             else:
                 account_posts = scrap_posts(driver, url, posts)
                 account.set_posts(account_posts)
+                print(account)
                 return account
         else:
             page_posts = scrap_posts(driver, url, posts)
             page.set_posts(page_posts)
+            print(page)
             return page
 
 

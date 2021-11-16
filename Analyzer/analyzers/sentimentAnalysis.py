@@ -14,7 +14,7 @@ def analyze_sentiments(posts):
 
     # calculate rate
     potentialFakeRate = potentialFakePostsNum / postsNum
-    potentialFakeRate = 1 - potentialFakeRate
+    potentialFakeRate = potentialFakeRate
     return potentialFakeRate
 
 # check if a post might be fake by analyzing it's polarity
@@ -30,14 +30,11 @@ def check_fake_potential(post):
     fake_threshold_super_high = 0.8
     fake_threshold_high = 0.7
     fake_threshold_mid = 0.5
-    # print(post)
     englishText = GoogleTranslator(source='he', target='en').translate(post)
-    # print(englishText)
     # auto analysis by nltk
     if englishText is None:
         return False
     sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
-    # print(sentimentDict)
     # check if sentiments indicates high fake potential
     if sentimentDict['neg'] >= fake_threshold_high or sentimentDict['pos'] >= fake_threshold_high:
         return True
@@ -46,7 +43,6 @@ def check_fake_potential(post):
     elif sentimentDict['neg'] >= fake_threshold_mid or sentimentDict['pos'] >= fake_threshold_mid or abs(sentimentDict['compound']) >= fake_threshold_super_high:
         # manual analysis
         manualSentimentCalc = analyze_manualy_sentiments_in_post(englishText) # get sentiments balance by counting words
-        # print(manualSentimentCalc)
         if abs(manualSentimentCalc) >= fake_threshold_super_high:
             return True
 
