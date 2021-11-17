@@ -225,7 +225,7 @@ def training_heb(filename, model_filename, tokenizer_filename):
     #
     # # if not finetuning - disable dropout
     # alephbert.eval()
-    X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels)
+    X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels, train_size=0.85)
 
     #augment training set to add more data
     X_train, y_train = augment_training_data(X_train, y_train, labels.size)
@@ -316,7 +316,7 @@ def grade_single_post(post, model, tokenizer):
     #prepare post
     post = clean_heb_text(post)
     post = post.split()
-    print(post)
+    # print(post)
     # post = get_lemmas(post)
     # post = get_keyWords(post)
     post = ['[CLS]'] + post[:511]
@@ -338,7 +338,10 @@ def grade_single_post(post, model, tokenizer):
 
         bert_predicted = (numpy_logits[:, 0] > 0.5)
         all_logits = (numpy_logits[:, 0])
-    return numpy_logits[:, 0]
+    to_retrun = numpy_logits[:, 0]
+    print(to_retrun[0])
+    return to_retrun[0]
+    # return numpy_logits[:, 0]
     # return float(bert_predicted)
 
 #======================================================================================================
@@ -365,7 +368,7 @@ if __name__ == '__main__':
     # csv_cleaner(filename, heb=True)
     clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
     # training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
-    training_heb(clean_filename, model_filename='BERT_model_clean_6_16_aug4.pkl', tokenizer_filename='AlephBERT_tokenizer_clean_6_16_aug4.pkl')
+    training_heb(clean_filename, model_filename='BERT_model_clean_6_16_aug5.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
 
     # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
     # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
