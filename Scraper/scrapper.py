@@ -12,6 +12,7 @@ from modules.Post import Post
 import time
 from datetime import date
 from machine_learning.datatrain import BertBinaryClassifier
+from Analyzer.Analyzer import analyze_facebook
 
 """
     some global needed variable, some might change in diffrent versions of Facebook
@@ -587,16 +588,22 @@ def scrap_page(driver, page_url):
 """
     This method extract the age of the group the driver is in.
 """
-def get_age_of_group(driver):
+def get_summary_of_group(driver):
     fields = driver.find_elements_by_xpath(about_group_fields)
+    private = 0
+    visible = 0
     for field in fields:
+        if 'Private' in field.text:
+            private = 1
+        if 'Visible' in field.text:
+            visible = 1
         if 'History' in field.text:
             hist_arr = field.text.split('\n')
             date_arr = hist_arr[1].replace(".", "").split(' ')
             date = ' '.join(date_arr[3:6])
             new_date = reformat_date(date)
-            return calculate_age(new_date)
-    return 0
+            return calculate_age(new_date), private, visible
+    return 0, private, visible
 
 
 """
@@ -646,15 +653,14 @@ def scrap_group(driver, group_url):
     # getting the other attributes of the group, that do not care of the user is logged in.
     name = driver.find_element_by_xpath(name_of_page)
     group_name = name.text.split('\n')[0]
-
-    group_age = get_age_of_group(driver)
+    group_age, isPrivate, isVisible = get_summary_of_group(driver)
     friends_num = get_friends_num_of_group(driver)
 
-    # getting mutual friend only if logged in, else returning None
-    mutuals = None
+    # getting mutual friend only if logged in, else returning 0
+    mutuals = 0
     if is_logged_in:
         mutuals = get_mutuals_group(driver)
-    return Group(group_name, group_age, friends_num, mutuals)
+    return Group(group_name, group_age, friends_num, isPrivate, isVisible, mutuals)
 
 
 # ============================================ Posts ===============================================
@@ -743,6 +749,13 @@ def scrap_posts(driver, url, num):
         driver.get(url + to_english)
     time.sleep(2)
 
+    #case of private group which the user is not in - cannot scrap posts of this group
+    if "groups" in url:
+        redirect(driver, "Discussion", False)
+        time.sleep(2)
+        if "discussion/preview" in driver.current_url:
+            return []
+
     arr = []
     counter = 0
     MAX_LOOPS = num*5
@@ -824,11 +837,8 @@ def scrap_one_post(driver, post_url, posts):
         if account is None:
             account = scrap_page(driver, url_account)
 
-        if account is not None:
-            user_posts = scrap_posts(driver, url_account, posts)
-            account.set_posts(user_posts)
 
-    return Post(writer, content, None, account)
+    return Post(writer, content, account)
 
 
 # ============================================ Scraping ===============================================
@@ -855,7 +865,6 @@ def scrap_url(driver, url, posts=0, loging_in=False):
         one_post = scrap_one_post(driver, url, posts)
         if one_post is None:
             return "Something went wrong with the post. Please try again."
-        print(one_post)
         return one_post
 
     # scarpping a group
@@ -865,7 +874,6 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             return "Something went wrong with the group. Please try again."
         group_posts = scrap_posts(driver, url, posts)
         group.set_posts(group_posts)
-        print(group)
         return group
 
     elif loging_in:
@@ -878,13 +886,11 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             else:
                 page_posts = scrap_posts(driver, url, posts)
                 page.set_posts(page_posts)
-                print(page)
                 return page
         # scarpping an account
         else:
             account_posts = scrap_posts(driver, url, posts)
             account.set_posts(account_posts)
-            print(account)
             return account
     else:
 
@@ -896,12 +902,10 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             else:
                 account_posts = scrap_posts(driver, url, posts)
                 account.set_posts(account_posts)
-                print(account)
                 return account
         else:
             page_posts = scrap_posts(driver, url, posts)
             page.set_posts(page_posts)
-            print(page)
             return page
 
 
@@ -909,15 +913,15 @@ if __name__ == '__main__':
 
     driver = init_sel() #to init the driver
     # if not login(driver, "ofrishani10@walla.com", "Ls5035"):
-    # login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
+    login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
 
     # account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
-    page = scrap_url(driver, "https://www.facebook.com/politicallycorret/posts/4824497954277882", posts=20, loging_in=False) #to scrap something; this case an account
+    page = scrap_url(driver, "https://www.facebook.com/groups/336084457286212", posts=20, loging_in=True) #to scrap something; this case an account
 
     finish_sel(driver) #to finish with the driver
     print(page)
-    # analyzed = analyze_facebook(post) #to analyze the something; this case the account
-    # print(vars(analyzed))
+    analyzed = analyze_facebook(page) #to analyze the something; this case the account
+    print(vars(analyzed))
 
     # account = scrap_url(driver, "https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True)
     # group = scrap_url(driver, "https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True)

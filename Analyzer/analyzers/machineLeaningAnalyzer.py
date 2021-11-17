@@ -29,7 +29,6 @@ def check_covid_relateness(post):
     length = len(post.split(' '))
     for word in covid_list:
         if word in post:
-            print(word)
             counter += 1
     div = counter/length
     percent = int((div * 100) // 1)

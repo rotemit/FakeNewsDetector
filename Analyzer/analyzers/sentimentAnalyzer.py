@@ -3,7 +3,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from deep_translator import GoogleTranslator
 sid = SentimentIntensityAnalyzer()
 
-def analyze_sentiments(posts):
+def analyze_sentiments1(posts):
     potentialFakePostsNum = 0
     postsNum = len(posts) # get total posts num  
 
@@ -14,7 +14,22 @@ def analyze_sentiments(posts):
 
     # calculate rate
     potentialFakeRate = potentialFakePostsNum / postsNum
-    potentialFakeRate = 1- potentialFakeRate
+    potentialFakeRate = 1 - potentialFakeRate
+    return potentialFakeRate
+
+def analyze_sentiments(posts):
+    potentialFakePostsNum = 0
+    # postsNum = len(posts) # get total posts num
+    amount = 0
+    for post in posts:
+        if post is not None:
+            amount += 1
+            comp = check_fake_potential(post)
+            potentialFakePostsNum += comp
+
+    # calculate rate
+    potentialFakeRate = potentialFakePostsNum / amount
+    potentialFakeRate = 1 - potentialFakeRate
     return potentialFakeRate
 
 # check if a post might be fake by analyzing it's polarity
@@ -35,18 +50,21 @@ def check_fake_potential(post):
     if englishText is None:
         return False
     sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
-    # check if sentiments indicates high fake potential
-    if sentimentDict['neg'] >= fake_threshold_high or sentimentDict['pos'] >= fake_threshold_high:
-        return True
-    
-    # check if sentiments indicates mid fake potential
-    elif sentimentDict['neg'] >= fake_threshold_mid or sentimentDict['pos'] >= fake_threshold_mid or abs(sentimentDict['compound']) >= fake_threshold_super_high:
-        # manual analysis
-        manualSentimentCalc = analyze_manualy_sentiments_in_post(englishText) # get sentiments balance by counting words
-        if abs(manualSentimentCalc) >= fake_threshold_super_high:
-            return True
-
-    return False   
+    comp = sentimentDict['compound'] + 1
+    comp = comp/2
+    return comp
+    # # check if sentiments indicates high fake potential
+    # if sentimentDict['neg'] >= fake_threshold_high or sentimentDict['pos'] >= fake_threshold_high:
+    #     return True
+    #
+    # # check if sentiments indicates mid fake potential
+    # elif sentimentDict['neg'] >= fake_threshold_mid or sentimentDict['pos'] >= fake_threshold_mid or abs(sentimentDict['compound']) >= fake_threshold_super_high:
+    #     # manual analysis
+    #     manualSentimentCalc = analyze_manualy_sentiments_in_post(englishText) # get sentiments balance by counting words
+    #     if abs(manualSentimentCalc) >= fake_threshold_super_high:
+    #         return True
+    #
+    # return False
 
 # analyze sentiments manually - by counting words
 def analyze_manualy_sentiments_in_post(englishText):
