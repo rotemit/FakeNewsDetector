@@ -26,6 +26,7 @@ def analyze_sentiments(posts):
             amount += 1
             comp = check_fake_potential(post)
             potentialFakePostsNum += comp
+            # print("post: " + post + "\ngrade: " + str(comp) + "\n")
 
     # calculate rate
     potentialFakeRate = potentialFakePostsNum / amount
@@ -50,8 +51,7 @@ def check_fake_potential(post):
     if englishText is None:
         return False
     sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
-    comp = sentimentDict['compound'] + 1
-    comp = comp/2
+    comp = abs(sentimentDict['compound'])
     return comp
     # # check if sentiments indicates high fake potential
     # if sentimentDict['neg'] >= fake_threshold_high or sentimentDict['pos'] >= fake_threshold_high:
