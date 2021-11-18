@@ -25,10 +25,11 @@ def grading_posts(posts):
 def check_covid_relateness(post):
     if post is None or post == "":
         return 0
+    lower_post = post.lower()
     counter = 0
     length = len(post.split(' '))
     for word in covid_list:
-        if word in post:
+        if word in lower_post:
             counter += 1
     div = counter/length
     percent = int((div * 100) // 1)

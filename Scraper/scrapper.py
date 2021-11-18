@@ -12,7 +12,7 @@ from modules.Post import Post
 import time
 from datetime import date
 from machine_learning.datatrain import BertBinaryClassifier
-from Analyzer.Analyzer import analyze_facebook
+from Analyzer.Analyzer import analyze_facebook, analyze_string
 
 """
     some global needed variable, some might change in diffrent versions of Facebook
@@ -26,7 +26,7 @@ name_of_page_1 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8
 name_of_page_2 = "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 embtmqzv fe6kdd0r mau55g9w c8b282yb hrzyx87i m6dqt4wy h7mekvxk hnhda86s oo9gr5id hzawbc8m']"
 about_group_fields = "//div[@class='dwo3fsh8 g5ia77u1 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv q9uorilb kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso l9j0dhe7 i1ao9s8h k4urcfbm']"
 to_english = "/?locale2=en_US"
-MAX_POST_LEN = 256
+MAX_POST_LEN = 511
 
 
 # ============================================ Driver ===============================================
@@ -530,7 +530,7 @@ def scrap_page(driver, page_url):
     time.sleep(2)
 
     # initializing the variables
-    mutual_friends = None
+    mutual_friends = 0
     page_age = 0
     followers = 0
     likes = 0
@@ -865,6 +865,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
         one_post = scrap_one_post(driver, url, posts)
         if one_post is None:
             return "Something went wrong with the post. Please try again."
+        print(one_post)
         return one_post
 
     # scarpping a group
@@ -874,6 +875,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             return "Something went wrong with the group. Please try again."
         group_posts = scrap_posts(driver, url, posts)
         group.set_posts(group_posts)
+        print(group)
         return group
 
     elif loging_in:
@@ -886,11 +888,13 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             else:
                 page_posts = scrap_posts(driver, url, posts)
                 page.set_posts(page_posts)
+                print(page)
                 return page
         # scarpping an account
         else:
             account_posts = scrap_posts(driver, url, posts)
             account.set_posts(account_posts)
+            print(account)
             return account
     else:
 
@@ -902,10 +906,12 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             else:
                 account_posts = scrap_posts(driver, url, posts)
                 account.set_posts(account_posts)
+                print(account)
                 return account
         else:
             page_posts = scrap_posts(driver, url, posts)
             page.set_posts(page_posts)
+            print(page)
             return page
 
 
@@ -913,6 +919,8 @@ if __name__ == '__main__':
 
     driver = init_sel() #to init the driver
     # if not login(driver, "ofrishani10@walla.com", "Ls5035"):
+
+
     login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
 
     # account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
@@ -922,6 +930,8 @@ if __name__ == '__main__':
     print(page)
     analyzed = analyze_facebook(page) #to analyze the something; this case the account
     print(vars(analyzed))
+
+
 
     # account = scrap_url(driver, "https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True)
     # group = scrap_url(driver, "https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True)

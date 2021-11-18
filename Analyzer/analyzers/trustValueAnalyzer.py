@@ -21,8 +21,10 @@ def analyze_account(account):
     tf = account.total_friends
     mf = account.mutual_friends
 
-    if aua == 0 or fd == 0 or tf ==0 or mf == 0:
+    if fd == 0:
         return -1
+    # if aua == 0 or fd == 0 or tf ==0 or mf == 0:
+    #     return -1
         
     # Thresholds
     T_aua = 244.34 #days
@@ -52,13 +54,13 @@ def analyze_group(group):
     tf = group.friends
     mf = group.mutual_friends
 
-    if ag == 0 or tf ==0 or mf == 0:
-        return -1
+    # if ag == 0 or tf ==0 or mf == 0:
+    #     return -1
 
     # Thresholds
     T_ag = 244.34  # days
     T_tf = 23.82  # people
-    T_mf = 37  # people
+    T_mf = 37  # peoplepyh
     T_priv = 1
     T_vis = 1
 
@@ -87,11 +89,11 @@ def analyze_page(page):
     mf = page.mutual_friends
     tf = max(fol, lik)
 
-    if ap == 0 or tf == 0 or mf == 0:
-        return -1
+    # if ap == 0 or tf == 0 or mf == 0:
+    #     return -1
 
     # Thresholds
-    T_ag = 244.34  # days
+    T_ap = 244.34  # days
     T_tf = 23.82  # people
     T_mf = 37  # people
 

@@ -1,96 +1,44 @@
-import re
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from deep_translator import GoogleTranslator
+from transformers import AutoTokenizer, AutoModel, pipeline
+tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis") #same as 'avichr/heBERT' tokenizer
+model = AutoModel.from_pretrained("avichr/heBERT_sentiment_analysis")
+
+# how to use?
+sentiment_analysis = pipeline( "sentiment-analysis",
+    model="avichr/heBERT_sentiment_analysis",
+    tokenizer="avichr/heBERT_sentiment_analysis",
+    return_all_scores = True
+)
 sid = SentimentIntensityAnalyzer()
-
-def analyze_sentiments1(posts):
-    potentialFakePostsNum = 0
-    postsNum = len(posts) # get total posts num  
-
-    for post in posts:
-        if post is not None:
-            if check_fake_potential(post):
-                potentialFakePostsNum += 1
-
-    # calculate rate
-    potentialFakeRate = potentialFakePostsNum / postsNum
-    potentialFakeRate = 1 - potentialFakeRate
-    return potentialFakeRate
 
 def analyze_sentiments(posts):
     potentialFakePostsNum = 0
-    # postsNum = len(posts) # get total posts num
     amount = 0
     for post in posts:
         if post is not None:
+            intensity = check_fake_potential(post)
+            potentialFakePostsNum +=  intensity
             amount += 1
-            comp = check_fake_potential(post)
-            potentialFakePostsNum += comp
-            # print("post: " + post + "\ngrade: " + str(comp) + "\n")
+            print("post: " + post + "\ngrade: " + str(intensity) + "\n")
 
     # calculate rate
     potentialFakeRate = potentialFakePostsNum / amount
-    potentialFakeRate = 1 - potentialFakeRate
+    potentialFakeRate = 1 - potentialFakeRate #colser to 0 = more FAKE
     return potentialFakeRate
 
-# check if a post might be fake by analyzing it's polarity
-# idea:
-# auto check >= high threshold --- return true
-# auto check >= mid threshold && manual check >= super high threshold -- return true
-# algo: 
-# get auto calculated sentiments
-# if sentiments pass high treshold - return true
-# if sentiments pass mid threshold - check also manually
-# if manual chack pass the super high threshold - return true
-def check_fake_potential(post):  
-    fake_threshold_super_high = 0.8
-    fake_threshold_high = 0.7
-    fake_threshold_mid = 0.5
+# returns the polarity both positive and negative of a post
+def check_fake_potential(post):
     englishText = GoogleTranslator(source='he', target='en').translate(post)
-    # auto analysis by nltk
     if englishText is None:
-        return False
+        return 0
+
+    # auto analysis by nltk
+    print(englishText)
     sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
-    comp = abs(sentimentDict['compound'])
-    return comp
-    # # check if sentiments indicates high fake potential
-    # if sentimentDict['neg'] >= fake_threshold_high or sentimentDict['pos'] >= fake_threshold_high:
-    #     return True
-    #
-    # # check if sentiments indicates mid fake potential
-    # elif sentimentDict['neg'] >= fake_threshold_mid or sentimentDict['pos'] >= fake_threshold_mid or abs(sentimentDict['compound']) >= fake_threshold_super_high:
-    #     # manual analysis
-    #     manualSentimentCalc = analyze_manualy_sentiments_in_post(englishText) # get sentiments balance by counting words
-    #     if abs(manualSentimentCalc) >= fake_threshold_super_high:
-    #         return True
-    #
-    # return False
-
-# analyze sentiments manually - by counting words
-def analyze_manualy_sentiments_in_post(englishText):
-    pos_word_list = []
-    neg_word_list = []
-    neu_word_list = []
-    wordList = re.sub("[^\w]", " ", englishText).split()
-    
-    for word in wordList:
-        if (sid.polarity_scores(word)['compound']) >= 0.1:
-            pos_word_list.append(word)
-        elif (sid.polarity_scores(word)['compound']) <= -0.1:
-            neg_word_list.append(word)
-        else:
-            neu_word_list.append(word)
-
-    countPos = len(pos_word_list)
-    countNeg = len(neg_word_list)
-    countNeu = len(neu_word_list)
-    countTotal = countNeg + countPos + countNeu
-    sentimentCalc = 0
-
-    if(countPos == countNeg):
-        sentimentCalc = 0
-    elif(countPos > countNeg):
-        sentimentCalc = countPos / (countPos + countNeg)
-    else:
-        sentimentCalc = countNeg / (countPos + countNeg) * (-1)
-    return sentimentCalc
+    print(sentimentDict)
+    print(sentiment_analysis(post))
+    if sentimentDict['pos'] < 0.1  or sentimentDict['neg'] < 0.1:
+        return abs(sentimentDict['compound'])
+    sum_pos_neg = sentimentDict['pos'] + sentimentDict['neg']
+    return sum_pos_neg
