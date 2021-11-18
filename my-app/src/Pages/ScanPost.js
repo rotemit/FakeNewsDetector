@@ -1,6 +1,6 @@
 import "./ScanPost.scss";
 import React, { useState } from 'react';
-import { Loader, Form, SubmitButton, Input, Modal } from "./BasicComponents";
+import { Loader, Form, SubmitButton, Input, Modal, Title } from "./BasicComponents";
 
 export const ScanPost = () => {
   const [text, setText] = useState('');
@@ -36,7 +36,7 @@ export const ScanPost = () => {
   }
   let error;
   async function handleSubmit()  { 
-      setResult({...Result, semantic: null});  
+      setResult({...Result, semantic: -1});  
       
       setIsClicked(true);
       const response = await fetch('/scanPost', {
@@ -85,7 +85,7 @@ export const ScanPost = () => {
 }
   const Toggle = () => {
     if (isClicked) {
-      if (result.semantic) {
+      if (result.semantic >= 0) {
          return (
           <>
           <Result />
@@ -98,14 +98,21 @@ export const ScanPost = () => {
   } 
   return <div></div>
   }
+
+  const urlInfoText = `Two options:
+  1. Enter text that you wish to examine. Maximum length: 256 words
+  2. Enter the URL of either a Facebook post, account, group, or page that you wish to examine`;
+  const numOfPostsInfoText=`Enter the number of posts you wish to scan and evaluate. 
+  In single post scan, and in the simple text scan, this value will be ignored.`
   return (
-    
+
     <div className='screen'>
         {(hasError)?  <Modal handleClose={clickCloseModal} show={showModal} text={`${error} please try again.`}/> : (
       <Form>
+        <Title title='Check for realness' />
         <div className='fields'>  
-          <Input label='Enter URL/text' type='textarea' value={text} onChange={e => setText(e.target.value)} />
-          <Input label='Number of posts' value={numOfPosts} onChange={e => setNumOfPosts(e.target.value)} />
+          <Input label='Enter URL/text' type='textarea' value={text} onChange={e => setText(e.target.value)} isToolip={true} title={urlInfoText} />
+          <Input label='Number of posts' value={numOfPosts} onChange={e => setNumOfPosts(e.target.value)} isToolip={true} title={numOfPostsInfoText} />
           <SubmitButton onSubmit={handleSubmit} />
         </div>
         <Toggle />

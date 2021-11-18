@@ -17,14 +17,24 @@
     height: 40px;
     width: 300px;
     display: flex;
+    margin: -30px -30px -30px -170px;
 }
 
 .icon{
     align-self: center;
-    height: 30px;
+    height: 60px;
 }
 
 .label {
     align-self: center;
     margin: 10px;
+}
+
+.info {
+    align-self: center;
+    height: 30px;
+}
+
+.buttom {
+    
 }

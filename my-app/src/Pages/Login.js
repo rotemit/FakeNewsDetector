@@ -2,7 +2,9 @@
 import "./Login.scss";
 import React, { useState } from 'react';
 import { Loader, Title, Input, Form, SubmitButton, Modal } from "./BasicComponents";
-import facebookIcon from '../facebook.png';
+import facebookIcon from '../facebook.svg';
+import infocsv from '../info.svg'
+import { Tooltip } from 'react-svg-tooltip';
 
 
 export const Login = () => {
@@ -65,21 +67,26 @@ export const Login = () => {
         } 
         return <div></div>
     }
- 
+    const infoText = `Skipping the login phase will result in less accurate results, 
+    and in some cases will prevent the program from returning a result. Visit the About page for more detail`
     return (
         <div className='screen'>
             <Form>
                 <Title title='Welcome to Hebrew Fake News Analayzer!' />
                 <div className='image'>
-                    <img src={facebookIcon } className='icon' />
-                    <label className='label'>Facebook details</label>
+                    <img title='aaa' src={facebookIcon } className='icon' />
+                    <label className='label'>Facebook login:</label>
+                 
                 </div>
                 <div className='fields'>
-                    <Input label='User name' type='text' value={name} name="User name" placeholder="example@gmail.com" onChange={(e) => setName(e.target.value)} />
+                    <Input label='Email' type='text' value={name} name="User name" placeholder="example@gmail.com" onChange={(e) => setName(e.target.value)} />
                     <Input label='Password' type='password' value={password} name="Password" onChange={(e) => setPassword(e.target.value)} />
                     <SubmitButton onSubmit={onSubmit} />
                 </div>
-                <a className='link' href="/ScanPost">Skip</a>
+                <div  className='buttom'>
+                    <a className='link' href="/ScanPost">Skip</a>
+                    <img title={infoText} src={infocsv} className='info' />
+                </div>
                 <Toggle />
             </Form>
         </div>

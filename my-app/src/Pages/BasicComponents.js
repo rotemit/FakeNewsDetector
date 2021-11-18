@@ -1,5 +1,6 @@
 import React from 'react';
 import './BasicComponents.scss';
+import info from '../info.svg'
 
 export const Form = ({children}) => {
     return <div className='formWrapper'>{children}</div>
@@ -13,7 +14,7 @@ export const Title = ({title}) => {
     return <div className='title'>{title}</div>;
 }
 
-export const Input = ({label, type, value, name, placeholder, onChange}) => {
+export const Input = ({label, type, value, name, placeholder, onChange, isToolip, title}) => {
     return (
         <div className='input'>
             <label className='label'>{label}</label>
@@ -25,6 +26,8 @@ export const Input = ({label, type, value, name, placeholder, onChange}) => {
                 placeholder={placeholder} 
                 onChange={onChange} 
             />
+            {isToolip &&
+             <img title={title} src={info } className='info' /> }
         </div>
     )
 }
