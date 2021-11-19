@@ -59,26 +59,27 @@ def analyze_group(group):
 
     # Thresholds
     T_ag = 244.34  # days
-    T_tf = 23.82  # people
+    T_tf = 50000  # people
     T_mf = 37  # peoplepyh
-    T_priv = 1
-    T_vis = 1
+    # T_priv = 1
+    # T_vis = 1
 
     # group credibility attributes
     U_ag = 1 if ag >= T_ag else ag / T_ag
     U_tf = 1 if tf >= T_tf else tf / T_tf
 
-    U_priv = 1 if priv >= T_priv else priv / T_priv
-    U_vis = 1 if vis >= T_vis else vis / T_vis
-    U_priv_vis = (U_priv + U_vis)/2
-    userCredibility = (U_ag + U_tf + U_priv_vis) / 3
+    # U_priv = 1 if priv >= T_priv else priv / T_priv
+    # U_vis = 1 if vis >= T_vis else vis / T_vis
+    # U_priv_vis = (U_priv + U_vis)/2
+    # userCredibility = (U_ag + U_tf + U_priv_vis) / 3
+    userCredibility = (U_ag + U_tf) / 2
 
     # Connection strength attributes
     C_mf = 1 if mf >= T_mf else mf / T_mf
     connectionStrength = C_mf
 
     # UTV = (U*|U| + C*|C|) / |U + C|
-    GTV = (userCredibility * 3 + connectionStrength * 1) / 4
+    GTV = (userCredibility * 2 + connectionStrength * 1) / 3
     return GTV
 
 
@@ -94,7 +95,7 @@ def analyze_page(page):
 
     # Thresholds
     T_ap = 244.34  # days
-    T_tf = 23.82  # people
+    T_tf = 25000  # people
     T_mf = 37  # people
 
     # Page credibility attributes

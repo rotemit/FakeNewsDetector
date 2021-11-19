@@ -252,7 +252,7 @@ def extract_total_friends(driver):
                 total_friends = elem.text
     temp = total_friends.partition("Friends\ufeff")
     if temp[2] == '':
-        return -1
+        return 0
     return int(temp[2])
 
 
@@ -292,7 +292,7 @@ def extract_friendship_duration(driver):
         upper_navigation_bar[len(upper_navigation_bar) - 1].click()
     # Usually means it is not account, but a page we are in
     except:
-        return None
+        return 0
 
     isFriend = redirect(driver, 'See Friendship', False)
     if isFriend is False:
@@ -465,11 +465,10 @@ def get_age_of_page(driver):
     and number of the user's friends that liked the page the driver is in.
 """
 def get_page_numbers(driver):
-    likes = None
+    likes = 0
     mutuals = 0
     follows = None
     last_resort = 0
-
     # First checking if the numbers are in the home page of the page
     elements = driver.find_elements_by_xpath("//div[@class='lpgh02oy']/div/div")
     for elem in elements:
@@ -479,8 +478,12 @@ def get_page_numbers(driver):
                 if 'people' in det:
                     if 'like' in det:
                         det_arr = det.split(' ')
+                        print(det_arr)
                         likes = int(det_arr[0].replace(",", ""))
-                        mutuals = int(det_arr[5].replace(",", ""))
+                        try:
+                            mutuals = int(det_arr[5].replace(",", ""))
+                        except:
+                            mutuals = 0
                     if 'follow' in det:
                         det_arr = det.split(' ')
                         follows = int(det_arr[0].replace(",", ""))
@@ -706,7 +709,7 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
                 # replacing all new-lines in post to spaces
                 # and inserting the post to the given array if not already there
                 text = post.text.replace('\n', ' ')
-                if text not in arr and text != '' and len(text) < MAX_POST_LEN:
+                if text not in arr and text != '' and len(text.split()) <= MAX_POST_LEN:
                     arr.insert(index, text)
                     index += 1
                     counter += 1
@@ -804,7 +807,7 @@ def scrap_one_post(driver, post_url, posts):
 
     if content == "":
         content = None
-    elif len(content) > MAX_POST_LEN:
+    elif len(content.split()) > MAX_POST_LEN:
         return "The post it too long. Maximum words is " + str(MAX_POST_LEN) + "."
 
     # Getting the account of whom wrote the post
@@ -900,7 +903,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
 
         page = scrap_page(driver, url)
         if page is None:
-            account = scrap_page(driver, url)
+            account = scrap_account(driver, url)
             if account is None:
                 return "Make sure the url is of valid post, group, page or account in Facebook"
             else:
@@ -924,42 +927,10 @@ if __name__ == '__main__':
     login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
 
     # account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
-    page = scrap_url(driver, "https://www.facebook.com/groups/336084457286212", posts=20, loging_in=True) #to scrap something; this case an account
+    page = scrap_url(driver, "https://www.facebook.com/sheker2020/posts/181102043793886",  loging_in=True) #to scrap something; this case an account
 
     finish_sel(driver) #to finish with the driver
     print(page)
     analyzed = analyze_facebook(page) #to analyze the something; this case the account
     print(vars(analyzed))
 
-
-
-    # account = scrap_url(driver, "https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True)
-    # group = scrap_url(driver, "https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True)
-    # post = scrap_url(driver, "https://www.facebook.com/groups/336084457286212/permalink/648330709394917", posts=20, loging_in=True)
-    # page = scrap_url(driver, "https://www.facebook.com/TheShadow69", posts=20, loging_in=True)
-    # page = scrap_url(driver, "https://www.facebook.com/Conspiralla/", posts=20, loging_in=True)
-    # scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # account = scrap_facebook(url_account="https://www.facebook.com/Gilad.Agam", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # account = scrap_facebook(url_account="https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # scrap_facebook(url_account="https://www.facebook.com/noam.fathi", posts=40, loging_in=True, user_url="https://www.facebook.com/ofri.shani.31", user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # page = scrap_facebook(url_page="https://www.facebook.com/TheShadow69", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # posts = scrap_facebook(url_group="https://www.facebook.com/groups/336084457286212", posts=20, onlyPosts=True, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # post = scrap_facebook(url_post="https://www.facebook.com/groups/336084457286212/permalink/648330709394917", posts=20,  loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # post = scrap_facebook(url_post="https://www.facebook.com/groups/813369869468028/posts/1062235314581481", loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # group = scrap_facebook(url_group="https://www.facebook.com/groups/wakeupeople", posts=20, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # page = scrap_facebook(url_page="https://www.facebook.com/Conspiralla/", posts=40, loging_in=True, user_mail="ofrishani10@walla.com", user_password="Is5035")
-    # print(posts)
-    #
-    # if analyzed is not None:
-    #     print(vars(analyzed))
-    # else:
-    #     print("somhow its None")
-    # print_dict(analyze_account(account))
-    # print(analyze_page(page))
-
-    # print(analyze_group(group))
-    # page: "https://www.facebook.com/TheShadow69")
-    # page: "https://www.facebook.com/hapshuta")
-    # "https://www.facebook.com/groups/bathefer1")
-    # post-link: "https://www.facebook.com/permalink.php?story_fbid=1510260152643112&id=100009774256825")
-    # "https://www.facebook.com/Gilad.Agam"

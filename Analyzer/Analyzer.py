@@ -6,7 +6,7 @@ from modules.Post import Post
 ############ analysis manager ############
 
 def analyze_facebook(obj):
-    if obj is None:
+    if obj is None or isinstance(obj, str):
         return None
     if isinstance(obj, Post):
         return analyze_post(obj)
