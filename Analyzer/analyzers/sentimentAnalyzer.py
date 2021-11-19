@@ -1,15 +1,6 @@
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from deep_translator import GoogleTranslator
-from transformers import AutoTokenizer, AutoModel, pipeline
-tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT_sentiment_analysis") #same as 'avichr/heBERT' tokenizer
-model = AutoModel.from_pretrained("avichr/heBERT_sentiment_analysis")
 
-# how to use?
-sentiment_analysis = pipeline( "sentiment-analysis",
-    model="avichr/heBERT_sentiment_analysis",
-    tokenizer="avichr/heBERT_sentiment_analysis",
-    return_all_scores = True
-)
 sid = SentimentIntensityAnalyzer()
 
 def analyze_sentiments(posts):
@@ -37,8 +28,9 @@ def check_fake_potential(post):
     print(englishText)
     sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
     print(sentimentDict)
-    print(sentiment_analysis(post))
-    if sentimentDict['pos'] < 0.1  or sentimentDict['neg'] < 0.1:
+    #if the post is either positive or negative - return the absoulte of 'compound'
+    if sentimentDict['pos'] == 0.0  or sentimentDict['neg'] == 0.0:
         return abs(sentimentDict['compound'])
+    #if the post contains both positive and negative phrases - return the sum of 'pos' and 'neg'
     sum_pos_neg = sentimentDict['pos'] + sentimentDict['neg']
     return sum_pos_neg
