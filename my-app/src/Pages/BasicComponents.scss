@@ -109,7 +109,9 @@
 }
 
 .info {
-    margin-left: 20px;
+    align-self: baseline;
+    margin-left: inherit;
+    // margin-left: 20px;
     margin-top: 10px;
     height: 15px;
 }

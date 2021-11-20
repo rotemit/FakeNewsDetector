@@ -1,6 +1,7 @@
 import React from 'react';
 import './BasicComponents.scss';
-import info from '../info.svg'
+import info from '../info.svg';
+import blueInfo from '../blueInfo.svg';
 
 export const Form = ({children}) => {
     return <div className='formWrapper'>{children}</div>
@@ -27,7 +28,7 @@ export const Input = ({label, type, value, name, placeholder, onChange, isToolip
                 onChange={onChange} 
             />
             {isToolip &&
-             <img title={title} src={info } className='info' /> }
+             <img title={title} src={blueInfo } className='info' /> }
         </div>
     )
 }

@@ -5,14 +5,17 @@ import { Loader, Form, SubmitButton, Input, Modal, Title } from "./BasicComponen
 export const ScanPost = () => {
   const [text, setText] = useState('');
   const [numOfPosts, setNumOfPosts] = useState(20);
-  const [result, setResult] = useState({trust:null, machine:null, semantic:null});
+  const [result, setResult] = useState({name: 'Text', trust:null, machine:null, semantic:null});
   const [isClicked, setIsClicked] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [errorText, setErrorText] = useState('');
   const [showModal, setShowModal] = useState(false);
 
 
   function Result() {
     return (
+          <>
+          <h3>{result.name} </h3>
            <table className='table'>
             <tr>
               <th >Category</th> 
@@ -31,10 +34,9 @@ export const ScanPost = () => {
               <td >{(result.semantic >= 0 ) ? (Number(result.semantic) * 100).toFixed(2) + '%'  : 'N/A'}</td>
             </tr>
            </table>
-
+            </>
     )
   }
-  let error;
   async function handleSubmit()  { 
       setResult({...Result, semantic: -1});  
       
@@ -47,17 +49,27 @@ export const ScanPost = () => {
         body: JSON.stringify({ url: text, numOfPosts: numOfPosts })
       })
       if (response.ok) {
-          setText('');
-          setNumOfPosts(20);
           response.json().then((res) => {
-            setResult({trust: res.utv_result, machine: res.machineLearning_result, semantic: res.sentimentAnalyzer_result })
-          }).catch((e) => console.log(e))
-      } else {
-        error = response.statusText;
-        setHasError(true);
-        setShowModal(true);
-        console.log(hasError)
-      }
+            if (res.error !== undefined) {
+              console.log(res.error);
+              setErrorText(res.error);
+              setHasError(true);
+              setShowModal(true);
+            } else {
+              setText('');
+              setNumOfPosts(20);
+              setResult({name: res.name, trust: res.utv_result, machine: res.machineLearning_result, semantic: res.sentimentAnalyzer_result })
+            }
+          })
+        }
+      // } else {
+      //   // console.log('error: ', response.statusText);
+      //   // setErrorText(response.statusText);
+        
+      //   // setHasError(true);
+      //   setShowModal(true);
+      //   console.log(hasError)
+      // }
      
   }
   let total = 0;
@@ -100,14 +112,14 @@ export const ScanPost = () => {
   }
 
   const urlInfoText = `Two options:
-  1. Enter text that you wish to examine. Maximum length: 256 words
+  1. Enter text that you wish to examine. Maximum length: 511 words
   2. Enter the URL of either a Facebook post, account, group, or page that you wish to examine`;
   const numOfPostsInfoText=`Enter the number of posts you wish to scan and evaluate. 
   In single post scan, and in the simple text scan, this value will be ignored.`
   return (
 
     <div className='screen'>
-        {(hasError)?  <Modal handleClose={clickCloseModal} show={showModal} text={`${error} please try again.`}/> : (
+        {(hasError)?  <Modal handleClose={clickCloseModal} show={showModal} text={errorText}/> : (
       <Form>
         <Title title='Check for realness' />
         <div className='fields'>  

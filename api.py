@@ -39,6 +39,10 @@ def scrap_post(text, numOfPosts):
     print("start")
     global post, driver
     account = scrap_url(driver, text, posts=int(numOfPosts), loging_in=True)
+    if isinstance(account, str):
+        print(account)
+
+        return {'error': account }
     analyzed = analyze_facebook(account)
     print("done")
     # https://www.facebook.com/ofri.shani.31/posts/10216864802065081

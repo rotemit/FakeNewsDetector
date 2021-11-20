@@ -1,10 +1,9 @@
-// import React from 'react';
 import "./Login.scss";
 import React, { useState } from 'react';
 import { Loader, Title, Input, Form, SubmitButton, Modal } from "./BasicComponents";
 import facebookIcon from '../facebook.svg';
-import infocsv from '../info.svg'
-import { Tooltip } from 'react-svg-tooltip';
+import infocsv from '../info.svg';
+import blueInfo from '../blueInfo.svg';
 
 
 export const Login = () => {
@@ -74,18 +73,18 @@ export const Login = () => {
             <Form>
                 <Title title='Welcome to Hebrew Fake News Analayzer!' />
                 <div className='image'>
-                    <img title='aaa' src={facebookIcon } className='icon' />
+                    <img src={facebookIcon } className='icon' />
                     <label className='label'>Facebook login:</label>
                  
                 </div>
-                <div className='fields'>
+                <div className='fieldsLogin'>
                     <Input label='Email' type='text' value={name} name="User name" placeholder="example@gmail.com" onChange={(e) => setName(e.target.value)} />
                     <Input label='Password' type='password' value={password} name="Password" onChange={(e) => setPassword(e.target.value)} />
                     <SubmitButton onSubmit={onSubmit} />
                 </div>
                 <div  className='buttom'>
                     <a className='link' href="/ScanPost">Skip</a>
-                    <img title={infoText} src={infocsv} className='info' />
+                    <img title={infoText} src={blueInfo} className='info' />
                 </div>
                 <Toggle />
             </Form>
