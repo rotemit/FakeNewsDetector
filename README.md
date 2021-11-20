@@ -23,7 +23,9 @@ Follow these steps to run the project:
 ```ruby
 (fakeNewsVenv) > pip install -r requirements.txt
 ```
-
+4. Download the trained ML model file 'BERT_model.pkl' from this link:
+https://drive.google.com/drive/folders/1XjgxUfRcZhu_Mr_T_TmUwZGMP9XTmz6q?usp=sharing
+Move the file to the folder: FakeNewsDetector/machine_learning
 
 Next, run the server:
 ```
