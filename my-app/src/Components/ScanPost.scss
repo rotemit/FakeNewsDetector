@@ -1,15 +1,11 @@
 .screen {
     display: flex;
     flex-wrap: wrap;
-    /* background: rgb(206, 200, 240); */
     justify-content: center;
     height: 100vh;
-    /* align-items: stretch; */
-
 }
 
 .form {
-
     height: 60%;
     width: 30%;
     border: 1px solid black;
@@ -35,10 +31,7 @@
 .urlInput {
     height: 40px;
     border-radius: 5px;
-    /* width: 70%; */
-    /* padding: 5px 5px; */
     margin: 20px;
-    /* box-sizing: border-box; */
 }
 
 .submitButton {
@@ -79,9 +72,6 @@
     border-bottom: 1px solid #ddd;
     height: 50px;
     margin: 10px;
-}
-.fields {
-    // margin-top: 40px;
 }
 
 .tableRow {

@@ -1,8 +1,8 @@
 import './App.scss';
-import {ScanPost} from './Pages/ScanPost'
-import {Login} from './Pages/Login'
-import { About } from './Pages/About';
-import { Contact } from './Pages/Contact';
+import {ScanPost} from './Components/ScanPost'
+import {Login} from './Components/Login'
+import { About } from './Components/About';
+import { Contact } from './Components/Contact';
 import React, { useState, useEffect } from "react";
 import background from "./image.jpeg";
 

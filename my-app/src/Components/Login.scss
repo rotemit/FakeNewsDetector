@@ -1,11 +1,8 @@
 .screen {
     display: flex;
     flex-wrap: wrap;
-    /* background: rgb(206, 200, 240); */
     justify-content: center;
     height: 100vh;
-    /* align-items: stretch; */
-
 }
 
 .link {
@@ -29,11 +26,6 @@
     align-self: center;
     margin: 10px;
 }
-
-// .info {
-//     align-self: center;
-//     height: 30px;
-// }
 
 .buttom {
     margin-bottom: 20px;

@@ -2,7 +2,6 @@ import "./Login.scss";
 import React, { useState } from 'react';
 import { Loader, Title, Input, Form, SubmitButton, Modal } from "./BasicComponents";
 import facebookIcon from '../facebook.svg';
-import infocsv from '../info.svg';
 import blueInfo from '../blueInfo.svg';
 
 
@@ -26,7 +25,6 @@ export const Login = () => {
         body: JSON.stringify({ name: name, password: password }),
         })
         if (response.ok) {
-            
             setIsDone(true);
             response.json().then((res) => setIsValid(res.result));
             if (!isValid) {
@@ -37,19 +35,14 @@ export const Login = () => {
             }
             
             setName('');
-            setPassword('');
-            
-        } else {
-            
-        }
-    
-    }
+            setPassword(''); 
+        };
+    };
 
     const clickCloseModal = () => {
         setShowModal(false);
         setIsSubmit(false);
-        console.log('clicked!');
-    }
+    };
 
     const Toggle = () => {
         if (isSubmit) {
@@ -65,9 +58,11 @@ export const Login = () => {
             }
         } 
         return <div></div>
-    }
+    };
+
     const infoText = `Skipping the login phase will result in less accurate results, 
-    and in some cases will prevent the program from returning a result. Visit the About page for more detail`
+    and in some cases will prevent the program from returning a result. Visit the About page for more detail`;
+    
     return (
         <div className='screen'>
             <Form>
@@ -75,7 +70,6 @@ export const Login = () => {
                 <div className='image'>
                     <img src={facebookIcon } className='icon' />
                     <label className='label'>Facebook login:</label>
-                 
                 </div>
                 <div className='fieldsLogin'>
                     <Input label='Email' type='text' value={name} name="User name" placeholder="example@gmail.com" onChange={(e) => setName(e.target.value)} />
@@ -89,5 +83,5 @@ export const Login = () => {
                 <Toggle />
             </Form>
         </div>
-    )
-}
+    );
+};

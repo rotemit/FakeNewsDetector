@@ -1,5 +1,4 @@
 .formWrapper {
-
     height: max-content;
     width: 30%;
     border: 1px solid black;
@@ -9,7 +8,6 @@
     background-color: rgb(215 211 182);
     display: flex;
     flex-direction: column;
-    // justify-content: space-between
 }
 
 .loader {
@@ -22,7 +20,6 @@
     display: inline-flex;
     align-self: center;
     margin-bottom: 25px;
-
 }
 
 @keyframes spin {
@@ -111,7 +108,6 @@
 .info {
     align-self: baseline;
     margin-left: inherit;
-    // margin-left: 20px;
     margin-top: 10px;
     height: 15px;
 }
