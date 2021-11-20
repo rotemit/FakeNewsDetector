@@ -865,57 +865,68 @@ def scrap_url(driver, url, posts=0, loging_in=False):
 
     # scarpping a post
     if "posts" in url or "permalink" in url:
-        one_post = scrap_one_post(driver, url, posts)
-        if one_post is None:
+        try:
+            one_post = scrap_one_post(driver, url, posts)
+            if one_post is None:
+                return "Something went wrong with the post. Please try again."
+            print(one_post)
+            return one_post
+        except:
             return "Something went wrong with the post. Please try again."
-        print(one_post)
-        return one_post
 
     # scarpping a group
     elif "groups" in url:
-        group = scrap_group(driver, url)
-        if group is None:
+        try:
+            group = scrap_group(driver, url)
+            if group is None:
+                return "Something went wrong with the group. Please try again."
+            group_posts = scrap_posts(driver, url, posts)
+            group.set_posts(group_posts)
+            print(group)
+            return group
+        except:
             return "Something went wrong with the group. Please try again."
-        group_posts = scrap_posts(driver, url, posts)
-        group.set_posts(group_posts)
-        print(group)
-        return group
 
     elif loging_in:
-        account = scrap_account(driver, url) #trying to scrap account
-        # scarpping a page
-        if account is None:
-            page = scrap_page(driver, url)
-            if page is None:
-                return "Make sure the url is of valid post, group, page or account in Facebook"
-            else:
-                page_posts = scrap_posts(driver, url, posts)
-                page.set_posts(page_posts)
-                print(page)
-                return page
-        # scarpping an account
-        else:
-            account_posts = scrap_posts(driver, url, posts)
-            account.set_posts(account_posts)
-            print(account)
-            return account
-    else:
-
-        page = scrap_page(driver, url)
-        if page is None:
-            account = scrap_account(driver, url)
+        try:
+            account = scrap_account(driver, url) #trying to scrap account
+            # scarpping a page
             if account is None:
-                return "Make sure the url is of valid post, group, page or account in Facebook"
+                page = scrap_page(driver, url)
+                if page is None:
+                    return "Make sure the url is of valid post, group, page or account in Facebook"
+                else:
+                    page_posts = scrap_posts(driver, url, posts)
+                    page.set_posts(page_posts)
+                    print(page)
+                    return page
+            # scarpping an account
             else:
                 account_posts = scrap_posts(driver, url, posts)
                 account.set_posts(account_posts)
                 print(account)
                 return account
-        else:
-            page_posts = scrap_posts(driver, url, posts)
-            page.set_posts(page_posts)
-            print(page)
-            return page
+        except:
+            return "Make sure the url is of valid post, group, page or account in Facebook"
+    else:
+        try:
+            page = scrap_page(driver, url)
+            if page is None:
+                account = scrap_account(driver, url)
+                if account is None:
+                    return "Make sure the url is of valid post, group, page or account in Facebook"
+                else:
+                    account_posts = scrap_posts(driver, url, posts)
+                    account.set_posts(account_posts)
+                    print(account)
+                    return account
+            else:
+                page_posts = scrap_posts(driver, url, posts)
+                page.set_posts(page_posts)
+                print(page)
+                return page
+        except:
+           return "Make sure the url is of valid post, group, page or account in Facebook"
 
 
 if __name__ == '__main__':
@@ -927,7 +938,7 @@ if __name__ == '__main__':
     login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
 
     # account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
-    page = scrap_url(driver, "https://www.facebook.com/sheker2020/posts/181102043793886",  loging_in=True) #to scrap something; this case an account
+    page = scrap_url(driver, "https://www.facebook.com/groups/336084457286212/permalink/680163492878305",  loging_in=True) #to scrap something; this case an account
 
     finish_sel(driver) #to finish with the driver
     print(page)
