@@ -11,9 +11,6 @@ from modules.Account import Account
 from modules.Post import Post
 import time
 from datetime import date
-from machine_learning.datatrain import BertBinaryClassifier
-from Analyzer.Analyzer import analyze_facebook, analyze_string
-
 """
     some global needed variable, some might change in diffrent versions of Facebook
 """
@@ -400,7 +397,7 @@ def scrap_account(driver, account_url):
     # getting the name of the given account url
     try:
         name = driver.find_element_by_xpath("//div[@class='rq0escxv l9j0dhe7 du4w35lb j83agx80 cbu4d94t pfnyh3mw d2edcug0 hpfvmrgz p8fzw8mz pcp91wgn iuny7tx3 ipjc6fyt']")
-        user_name = name.text
+        user_name = name.text.replace("\n", " ")
     except:
         return None
 
@@ -525,7 +522,7 @@ def scrap_page(driver, page_url):
     # if the user is logged in, we simply bring the driver to the given page url
     # if not, we cannot be sure Facebook will be in English,
     # so we add suffix for the url so we get the English version of Facebook
-    # page_url = check_url(page_url)
+    page_url = check_url(page_url)
     if is_logged_in:
         driver.get(page_url)
     else:
@@ -567,7 +564,7 @@ def scrap_page(driver, page_url):
             name = driver.find_element_by_xpath("//span[@class='_kao']")
         except:
             return None
-        page_name = name.text
+        page_name = name.text.replace("\n", " ")
         elements = driver.find_elements_by_xpath("//div[@class='_1xnd']/div")
         for elem in elements:
             arr = elem.text.split('\n')
@@ -700,8 +697,6 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
                 if "See More" in post.text:
                     try:
                         more = redirect_by_xpath("//div[text()='See More']")
-                        # more[0].click()
-                        # more = post.find_element_by_xpath("//div[text()='See More']")
                         if more is not None:
                             webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
                     except:
@@ -720,8 +715,6 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
             if "See More" in post.text:
                 try:
                     more = redirect_by_xpath("//div[text()='See More']")
-                    # more[0].click()
-                    # more = post.find_element_by_xpath("//div[text()='See More']")
                     if more is not None:
                         webdriver.ActionChains(driver).move_to_element(more[0]).click(more[0]).perform()
                 except:
@@ -744,7 +737,6 @@ def scroll_over_posts(driver, elements_xpath_text, elements_xpath_background, nu
     num - the number of posts to extract
 """
 def scrap_posts(driver, url, num):
-
     url = check_url(url)
     if is_logged_in:
         driver.get(url)
@@ -752,7 +744,7 @@ def scrap_posts(driver, url, num):
         driver.get(url + to_english)
     time.sleep(2)
 
-    #case of private group which the user is not in - cannot scrap posts of this group
+    # case of private group which the user is not in - cannot scrap posts of this group
     if "groups" in url:
         redirect(driver, "Discussion", False)
         time.sleep(2)
@@ -840,7 +832,6 @@ def scrap_one_post(driver, post_url, posts):
         if account is None:
             account = scrap_page(driver, url_account)
 
-
     return Post(writer, content, account)
 
 
@@ -910,7 +901,8 @@ def scrap_url(driver, url, posts=0, loging_in=False):
             return "Make sure the url is of valid post, group, page or account in Facebook"
     else:
         try:
-            page = scrap_page(driver, url)
+            page = scrap_page(driver, url) #trying to scrap page
+            # scarpping an account
             if page is None:
                 account = scrap_account(driver, url)
                 if account is None:
@@ -920,6 +912,7 @@ def scrap_url(driver, url, posts=0, loging_in=False):
                     account.set_posts(account_posts)
                     print(account)
                     return account
+            # scarpping a page
             else:
                 page_posts = scrap_posts(driver, url, posts)
                 page.set_posts(page_posts)
@@ -927,21 +920,3 @@ def scrap_url(driver, url, posts=0, loging_in=False):
                 return page
         except:
            return "Make sure the url is of valid post, group, page or account in Facebook"
-
-
-if __name__ == '__main__':
-
-    driver = init_sel() #to init the driver
-    # if not login(driver, "ofrishani10@walla.com", "Ls5035"):
-
-
-    login(driver, "ofrishani10@walla.com", "Is5035") #login in - return true on success, false otherwise.
-
-    # account = scrap_url(driver, "https://www.facebook.com/uri.mazor.52", posts=20, loging_in=True) #to scrap something; this case an account
-    page = scrap_url(driver, "https://www.facebook.com/groups/336084457286212/permalink/680163492878305",  loging_in=True) #to scrap something; this case an account
-
-    finish_sel(driver) #to finish with the driver
-    print(page)
-    analyzed = analyze_facebook(page) #to analyze the something; this case the account
-    print(vars(analyzed))
-

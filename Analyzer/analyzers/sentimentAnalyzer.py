@@ -1,7 +1,7 @@
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from deep_translator import GoogleTranslator
-
 sid = SentimentIntensityAnalyzer()
+
 
 def analyze_sentiments(posts):
     potentialFakePostsNum = 0
@@ -25,9 +25,7 @@ def check_fake_potential(post):
         return 0
 
     # auto analysis by nltk
-    print(englishText)
-    sentimentDict = sid.polarity_scores(englishText)    # get sentiments of text
-    print(sentimentDict)
+    sentimentDict = sid.polarity_scores(englishText)
     #if the post is either positive or negative - return the absoulte of 'compound'
     if sentimentDict['pos'] == 0.0  or sentimentDict['neg'] == 0.0:
         return abs(sentimentDict['compound'])

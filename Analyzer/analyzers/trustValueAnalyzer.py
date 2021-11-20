@@ -2,9 +2,6 @@ from modules.Account import Account
 from modules.Group import Group
 from modules.Page import Page
 
-# UTV = user trust level
-# aua = age of user account, fd = friendship duration, tf = total friends, mf = mutual friends
-# all computations are according to Nadav's article
 
 def analyze_facebook(obj):
     if isinstance(obj, Account):
@@ -15,17 +12,19 @@ def analyze_facebook(obj):
         return analyze_page(obj)
     return -1
 
+# UTV = user trust level
+# aua = age of user account, fd = friendship duration, tf = total friends, mf = mutual friends
+# all computations are according to Nadav's article
 def analyze_account(account):
     aua = account.age
     fd = account.friendship_duration
     tf = account.total_friends
     mf = account.mutual_friends
 
+    # in case they are not friends
     if fd == 0:
         return -1
-    # if aua == 0 or fd == 0 or tf ==0 or mf == 0:
-    #     return -1
-        
+
     # Thresholds
     T_aua = 244.34 #days
     T_fd = 17.12 #days
@@ -49,37 +48,24 @@ def analyze_account(account):
 
 def analyze_group(group):
     ag = group.age
-    priv = group.isPrivate
-    vis = group.isVisible
     tf = group.friends
     mf = group.mutual_friends
-
-    # if ag == 0 or tf ==0 or mf == 0:
-    #     return -1
 
     # Thresholds
     T_ag = 244.34  # days
     T_tf = 50000  # people
-    T_mf = 37  # peoplepyh
-    # T_priv = 1
-    # T_vis = 1
+    T_mf = 37  # people
 
     # group credibility attributes
     U_ag = 1 if ag >= T_ag else ag / T_ag
     U_tf = 1 if tf >= T_tf else tf / T_tf
-
-    # U_priv = 1 if priv >= T_priv else priv / T_priv
-    # U_vis = 1 if vis >= T_vis else vis / T_vis
-    # U_priv_vis = (U_priv + U_vis)/2
-    # userCredibility = (U_ag + U_tf + U_priv_vis) / 3
-    userCredibility = (U_ag + U_tf) / 2
+    groupCredibility = (U_ag + U_tf) / 2
 
     # Connection strength attributes
     C_mf = 1 if mf >= T_mf else mf / T_mf
     connectionStrength = C_mf
 
-    # UTV = (U*|U| + C*|C|) / |U + C|
-    GTV = (userCredibility * 2 + connectionStrength * 1) / 3
+    GTV = (groupCredibility * 2 + connectionStrength * 1) / 3
     return GTV
 
 
@@ -90,9 +76,6 @@ def analyze_page(page):
     mf = page.mutual_friends
     tf = max(fol, lik)
 
-    # if ap == 0 or tf == 0 or mf == 0:
-    #     return -1
-
     # Thresholds
     T_ap = 244.34  # days
     T_tf = 25000  # people
@@ -101,13 +84,11 @@ def analyze_page(page):
     # Page credibility attributes
     U_ap = 1 if ap >= T_ap else ap / T_ap
     U_tf = 1 if tf >= T_tf else tf / T_tf
-
-    userCredibility = (U_ap + U_tf ) / 2
+    pageCredibility = (U_ap + U_tf ) / 2
 
     # Connection strength attributes
     C_mf = 1 if mf >= T_mf else mf / T_mf
     connectionStrength = C_mf
 
-    # UTV = (U*|U| + C*|C|) / |U + C|
-    PTV = (userCredibility * 2 + connectionStrength * 1) / 3
+    PTV = (pageCredibility * 2 + connectionStrength * 1) / 3
     return PTV

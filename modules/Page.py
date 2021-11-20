@@ -1,5 +1,5 @@
 class Page:
-    def __init__(self, name, age_of_page, followers, num_of_likes, mutual_friends=0):
+    def __init__(self, name, age_of_page, followers, num_of_likes, mutual_friends):
         self.name = name
         self.age = age_of_page
         self.followers = followers

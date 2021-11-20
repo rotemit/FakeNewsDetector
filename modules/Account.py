@@ -1,8 +1,5 @@
-import json
-from collections import namedtuple
-
 class Account:
-    def __init__(self, name, total_friends, age_of_account, friendship_duration=0, mutual_friends=0):
+    def __init__(self, name, total_friends, age_of_account, friendship_duration, mutual_friends):
         self.name = name
         self.total_friends = total_friends
         self.age = age_of_account
@@ -11,7 +8,7 @@ class Account:
         self.posts = []
 
     def __str__(self):
-        return "Name: " + str(self.name) + "\n" \
+        return "Name: " + str(self.name)  \
             + "\nFriendship Duration: " + str(self.friendship_duration) \
                + "\nNumber of Mutual Friends: " + str(self.mutual_friends) + "\nTotal Friends: " + \
                str(self.total_friends) + "\nAge Of Account:  " + str(self.age) + \
@@ -19,5 +16,3 @@ class Account:
 
     def set_posts(self, posts_arr):
         self.posts = posts_arr
-
-
