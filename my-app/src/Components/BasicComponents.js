@@ -6,6 +6,10 @@ export const Form = ({children}) => {
   return <div className='formWrapper'>{children}</div>
 };
 
+export const AboutForm = ({children}) => {
+  return <div className='formWrapperAbout'>{children}</div>
+};
+
 export const Loader = () => {
   return <div className='loader' />;
 };

@@ -3,6 +3,23 @@ import time
 import requests
 import random
 
+"""
+Citation:
+@article{more-etal-2019-joint,
+    title = "Joint Transition-Based Models for Morpho-Syntactic Parsing: Parsing Strategies for {MRL}s and a Case Study from Modern {H}ebrew",
+    author = "More, Amir  and
+      Seker, Amit  and
+      Basmova, Victoria  and
+      Tsarfaty, Reut",
+    journal = "Transactions of the Association for Computational Linguistics",
+    volume = "7",
+    year = "2019",
+    url = "https://www.aclweb.org/anthology/Q19-1003",
+    doi = "10.1162/tacl_a_00253",
+    pages = "33--48",
+    abstract = "In standard NLP pipelines, morphological analysis and disambiguation (MA{\&}D) precedes syntactic and semantic downstream tasks. However, for languages with complex and ambiguous word-internal structure, known as morphologically rich languages (MRLs), it has been hypothesized that syntactic context may be crucial for accurate MA{\&}D, and vice versa. In this work we empirically confirm this hypothesis for Modern Hebrew, an MRL with complex morphology and severe word-level ambiguity, in a novel transition-based framework. Specifically, we propose a joint morphosyntactic transition-based framework which formally unifies two distinct transition systems, morphological and syntactic, into a single transition-based system with joint training and joint inference. We empirically show that MA{\&}D results obtained in the joint settings outperform MA{\&}D results obtained by the respective standalone components, and that end-to-end parsing results obtained by our joint system present a new state of the art for Hebrew dependency parsing.", 
+}
+"""
 
 '''
     Words with these tags are in key positions.

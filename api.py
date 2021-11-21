@@ -10,7 +10,6 @@ from machine_learning.datatrain import BertBinaryClassifier
 
 import pandas as pd
 
-
 # try:
 #     from machine_learning import scrap_posts
 # except ImportError:

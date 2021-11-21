@@ -13,11 +13,14 @@ import torch.nn as nn
 import torch
 import random
 
-#pips: pip install tensorflow --user
-#       pip install gensim
-#       pip install transformers    #for AlephBERT
-#       pip install torch torchvision torchaudio    #for AlephBERT
-
+"""
+Citation:
+  title={AlephBERT: a Pre-trained Language Model to Start Off your Hebrew NLP Application}, 
+  
+  author={Amit Seker, Elron Bandel, Dan Bareket, Idan Brusilovsky, Shaked Refael Greenfeld, Reut Tsarfaty},
+  
+  year={2021}
+"""
 
 
 """
@@ -28,9 +31,6 @@ def remove_punc(txt):
     txt = txt.lower()
     # initializing punctuations string
     punc = '''!()-[]{};:'"\,<>./?@#$%^&*_~–'''
-
-    # Removing punctuations in string
-    # Using loop + punctuation string
     for ele in txt:
         if ele in punc:
             txt = txt.replace(ele, "")
@@ -45,6 +45,7 @@ def replace_recurring_english_words(txt):
     txt = txt.replace('mrna', 'מרנא')
     txt = txt.replace('rna', 'רנא')
     txt = txt.replace('fda', 'פדא')
+    txt = txt.replace('dna', 'דנא')
     txt = txt.replace('pims', 'פימס')
     txt = txt.replace('see more', '')
     return txt
@@ -63,47 +64,23 @@ def clean_heb_text(txt):
     return ret
 
 '''
-    Given a dataframe with Text column, clean text, and if it's Hebrew, extract keywords.
-    Both are in additional columns
+    Create a new csv file from a given csv file with data.
+    Drop duplicates, remove rows with null labels, insert a new clean_text column with clean text
 '''
-def clean_dataset(df, heb=False):
-    if heb:
-        df['clean_text'] = df.apply(lambda row: clean_heb_text(row['text']), axis=1)
-        df['lemmatized'] = df.apply(lambda row: get_lemmas(row['clean_text']), axis=1)
-        # df['keywords'] = df.apply(lambda row: get_keyWords(row['clean_text']), axis=1)
-    else:
-        df['clean_text'] = df.apply(lambda row: clean_text(row['Text']), axis=1)
-
-def csv_cleaner(file, heb=False):
+def csv_cleaner(file):
     df = pd.read_csv(file)
     df = df.drop_duplicates()
     df = df[df['binary label'].notna()] #we don't want to waste time cleaning unusable rows
-    clean_dataset(df, heb)
+    df['clean_text'] = df.apply(lambda row: clean_heb_text(row['text']), axis=1)
     new_name = file.rsplit(".", 1)[0] + 'Clean.csv'
     df.to_csv(new_name, encoding='utf-8', index=False, mode='w+')
 
 
-
-#==========================HEBREW TRAINING=========================================================
+#**********************DATA AUGMENTATION*********************
 '''
-    Training for Hebrew dataset. with helper function
-    all the changes of the new word2vec in gensim: https://github.com/RaRe-Technologies/gensim/wiki/Migrating-from-Gensim-3.x-to-4
+   Two functions for performing Random swap.
+   swaps n pairs of words in a sentence
 '''
-
-def from_str_to_lst(text):
-    text = text.replace("\'", "")
-    text = text.replace("]", "")
-    text = text.replace("[", "")
-    arr = text.split(', ')
-    return arr
-
-def get_weight_matrix(model, vocab_size, vocab, DIM=100):
-    weight_matrix = np.zeros((vocab_size, DIM))
-    for word,i in vocab.items():
-        weight_matrix[i] = model.wv[word]
-    return weight_matrix
-
-
 def swap_word(new_words):
     random_idx_1 = random.randint(0, len(new_words) - 1)
     random_idx_2 = random_idx_1
@@ -131,7 +108,9 @@ def random_swap(words, n):
 
     return sentence
 
-
+'''
+    Randomly delete words in a sentence; delete a word with probability p
+'''
 def random_deletion(words, p):
     words = words.split()
 
@@ -155,7 +134,11 @@ def random_deletion(words, p):
 
     return sentence
 
-
+'''
+    Main function for training data augmentation.
+    Gets the training sentences and labels, and size of training data.
+    Returns new data, with augmented sentences
+'''
 def augment_training_data(X_train, y_train, size):
     merged = pd.DataFrame()
     merged['sentence'] = X_train
@@ -179,18 +162,10 @@ def augment_training_data(X_train, y_train, size):
         merged.loc[str(size)] = [augmented_sentence, row['label']]
         size += 1
 
-    # #Random Lemmatization Augmentation
-    # to_augment = merged.sample(frac=0.1)
-    # # augment these rows
-    # for _, row in to_augment.iterrows():
-    #     augmented_sentence = random_lemmas(row['sentence'], p=0.2)
-    #     merged.loc[str(size)] = [augmented_sentence, row['label']]
-    #     size += 1
-    #
     return merged['sentence'], merged['label']
 
 
-
+#*****************AlephBERT Wrapper*********************************************
 class BertBinaryClassifier(nn.Module):
     def __init__(self, dropout=0.1):
         super(BertBinaryClassifier, self).__init__()
@@ -206,28 +181,25 @@ class BertBinaryClassifier(nn.Module):
         proba = self.sigmoid(linear_output)
         return proba
 
+#**********************Hebrew Training********************************
+'''
+    Run training for Hebrew data. Save trained model in model_filename, and tokenizer in tokenizer_filename,
+    for future evaluation.
+    We invite the user to play with BATCH_SIZE and EPOCHS, and observe the different results.
+'''
 def training_heb(filename, model_filename, tokenizer_filename):
     df = pd.read_csv(filename)
-    #================ALEPHBERT===========================================================
-    #were doing transfer learning, because this model already learned a lot
-    BATCH_SIZE = 16     #try 16. or 32. training will be faster.
-                        #after BATCHSIZE samples, will update the network
-    EPOCHS = 6          #try changing to 50. if after a certaing number of epochs there isnt a drastic change, lower the number
-    #leave learning rate small, because we dont want to drastically change everything bert learned before
-    LEARNING_RATE = 3e-6   #tried 0.001, 0.0001, 3e-6. all pretty much the same acc result
+    BATCH_SIZE = 16
+    EPOCHS = 6
+    LEARNING_RATE = 3e-6
 
-    # df['keywords'] = df.apply(lambda row: from_str_to_lst(row['lemmatized']), axis=1)
-    # X = df['keywords']
-    X = df['clean_text'] #commented out when trying keywords
+    X = df['clean_text']
     labels = df['binary label']
     alephbert_tokenizer = BertTokenizerFast.from_pretrained('onlplab/alephbert-base')
-    # alephbert = BertModel.from_pretrained('onlplab/alephbert-base')
-    #
-    # # if not finetuning - disable dropout
-    # alephbert.eval()
+
     X_train, X_test, y_train, y_test = train_test_split(X, labels, stratify=labels, train_size=0.85)
 
-    #augment training set to add more data
+    #augment training set to add more data and avoid overfitting
     X_train, y_train = augment_training_data(X_train, y_train, labels.size)
 
     y_train = np.array(y_train)
@@ -235,12 +207,9 @@ def training_heb(filename, model_filename, tokenizer_filename):
 
     train_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_train))
     test_tokens = list(map(lambda t: ['[CLS]'] + alephbert_tokenizer.tokenize(t)[:511], X_test))
-    # train_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_train)) #when using keywords
-    # test_tokens = list(map(lambda t: ['[CLS]'] + t[:511], X_test))   #when using keywords
     train_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, train_tokens))
     test_tokens_ids = list(map(alephbert_tokenizer.convert_tokens_to_ids, test_tokens))
 
-    maxlen = 250         #250 is YAP's limit, 512 is BERT's limit
     train_tokens_ids = pad_sequences(train_tokens_ids, maxlen=512)
     test_tokens_ids = pad_sequences(test_tokens_ids, maxlen=512)
 
@@ -261,7 +230,6 @@ def training_heb(filename, model_filename, tokenizer_filename):
     test_dataset = torch.utils.data.TensorDataset(test_tokens_tensor, test_masks_tensor, test_y_tensor)
     test_sampler = torch.utils.data.SequentialSampler(test_dataset)
     test_dataloader = torch.utils.data.DataLoader(test_dataset, sampler=test_sampler, batch_size=BATCH_SIZE)
-
 
     bert_clf = BertBinaryClassifier()
     optimizer = torch.optim.Adam(bert_clf.parameters(), lr=LEARNING_RATE)
@@ -304,11 +272,15 @@ def training_heb(filename, model_filename, tokenizer_filename):
     joblib.dump(alephbert_tokenizer, tokenizer_filename)
 
     print(classification_report(y_test, bert_predicted))
-    #================ALEPHBERT===========================================================
+
+#****************************Functions for grading a single post*************
 def pad(post, size):
     return [0]*abs(len(post)-size) + post
 
-
+'''
+    For a single post, prepare it for evaluation: clean, tokenize using tokenizer, generate masks.
+    Evaluate using saved BERT model. Return a floating point number between 0-1, 0 being fake and 1 real
+'''
 def grade_single_post(post, model, tokenizer):
     #load trained model and fitted tokenizer
     bert_clf = joblib.load(model)
@@ -316,9 +288,6 @@ def grade_single_post(post, model, tokenizer):
     #prepare post
     post = clean_heb_text(post)
     post = post.split()
-    # print(post)
-    # post = get_lemmas(post)
-    # post = get_keyWords(post)
     post = ['[CLS]'] + post[:511]
     #AlephBERT post
     post_ids = tokenizer.convert_tokens_to_ids(post)
@@ -344,68 +313,15 @@ def grade_single_post(post, model, tokenizer):
     # return numpy_logits[:, 0]
     # return float(bert_predicted)
 
-#======================================================================================================
+#=========================================MAIN=============================================================
 
-
+'''
+    Run this main function if you wish to run training.
+    If your csv file is new, run cleaning first.
+    your trained model will be saved in model_filename, and the tokenizer in tokenizer_filename
+'''
 if __name__ == '__main__':
-    # *************** MANUAL CHECKS **********************
-    # svm_model = 'combined_trained_model.pkl'
-    # vectorizer = 'tfidf_vectorizer.pkl'
-    # grade_single_post('"קבלו רמז: אני לא התחסנתי בכלל ולא נדבקתי ולא הייתי חולה. ביי "', svm_model, vectorizer)
-    # grade_single_post("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", svm_model, vectorizer)
-    # grade_single_post("שאלה בורה, החיסון ידוע לכל אחד שלא מונע הדבקה", svm_model, vectorizer)
-    # grade_single_post("השגרירות ההודית בטוקיו אמרה שיותר מחבר צוות הודי אחד על נסיכת היהלום נמצא חיובי לקורונה", svm_model, vectorizer)
-    # grade_single_post("Just in: Novel coronavirus named 'Corona': UN health agency. (AFP)", svm_model, vectorizer)
-    # grade_single_post("WHO officially names coronavirus as Corona. CoronaOutbreak", svm_model, vectorizer)
-    # grade_single_post("The Indian Embassy in Tokyo has said that one more Indian crew member on Diamond Princess has tested positive for Corona.", svm_model, vectorizer)
-    # grade_single_post("קורונה גורמת לתחלואה קשה ותמותה גם בקרב צעירים שאינם מחוסנים 📈 עד גיל 50 - מי שלא התחסנו כלל, מהווים 69% מהחולים קשה ו-96% מהנפטרים (בין התאריכים 1.6 ל-4.9). אלו העובדות. חיסון ראשון, שני או שלישי - פשוט צאו להתחסן!", svm_model, vectorizer)
-    # grade_single_post("קורונה זו לא רק 'מחלה של מבוגרים'! גם צעירים שלא מתחסנים חושפים עצמם למחלה קשה. 85% ממאושפזי הקורונה אשר נמצאים כעת במצב קריטי ומחוברים למכשיר אקמו - אינם מחוסנים. גילם הממוצע - 47. קורונה עלולה להיות מחלה קשה למבוגרים ולצעירים אבל בעיקר ללא מחוסנים. צאו להתחסן.", svm_model, vectorizer)
-    # grade_single_post("עשרות, מאות, וכנראה אלפי אנשים שהוזרקו, מתים סובלים מדלקות בלב מנכויות קשות, מדום לב חולים במחלה שהתחסנו ממנה הכל על פי עדויות ממקור ראשון שנאספות בקושי ומראות רק את קצה הקרחון בעוד שהתמונה האמיתית נשארת במחשכים, מצונזרת ומוסתרת באלימות פראית ", svm_model, vectorizer)
-
-    #***********HEB DATA!******************************
-    # filename = 'dataset_for_code_testing - Sheet1.csv'
-    filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
-    # csv_cleaner(filename, heb=True)
+    filename = 'heb_data.csv'
+    # csv_cleaner(filename)
     clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
-    # training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
-    training_heb(clean_filename, model_filename='BERT_model_clean_6_16_aug5.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
-
-    # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
-    # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
-    # training_heb(clean_filename, model_filename='BERT_model_clean_20_16_aug2.pkl', tokenizer_filename='AlephBERT_tokenizer_clean_20_16_aug2.pkl')
-    #
-    # filename = 'NEW_manual_data_our_tags - NEW_manual_data.csv'
-    # clean_filename = filename.rsplit(".", 1)[0] + 'Clean.csv'
-    # training_heb(clean_filename, model_filename='BERT_model_clean_20_16_aug3.pkl',
-    #              tokenizer_filename='AlephBERT_tokenizer_clean_20_16_aug3.pkl')
-
-    # model = 'BERT_model_clean_6_16_aug.pkl'
-    # tokenizer = 'AlephBERT_tokenizer_clean_6_16_aug.pkl'
-    # # print(grade_single_post("יש לך בעיה רצינית בהבנת הנושא - החיסון ( לא ניסוי לא ניסוי ) עבר בדיקות מחמירות של רשות הבריאות האמריקאית , וסתם קצת השכלה יא דבע - זאת הרשות הכי מחמירה בבדיקות של חיסונים ותרופות . אל לך תלמד קצת אהבל !! ליפני שאתה מביע דיעות ללא שום בסיס מדעי", model, tokenizer))
-    # # print(grade_single_post("ידוע לא מעט על פגיעה בבלוטת התריס ובלוטות הלימפה שליד מיד אחרי החיסון הראשון או השני", model, tokenizer))
-    # # print(grade_single_post("אין מחקר שאומר מה השפעות על פריון על ילדים שחלו בקורונה זה יתבהר בעוד שנים כאשר יגיעו לגיל המתאים. כרגע רק מתחילים מחקרים על השפעות קורונה על ילדים עיכוב התפתחות וצמיחה והשפעות נוספות זה מחקרים שהתוצאות יהיו עוד שנים", model, tokenizer))
-    # # print(grade_single_post("כיום הקורונה אינה פוגעת רק באנשים עם מחלות רקע קשה . מה גם שמחלות רקע לא הכוונה לאדם שעומד למות .", model, tokenizer))
-    # print(grade_single_post("אין כללים. כל גוף מגיב אחרת. זה קורונה.", model, tokenizer))
-    # print(grade_single_post("לרוב אזרחי העולם [הקורונה] זה בדיוק מה שזה- שפעת!", model, tokenizer))
-    # print(grade_single_post("מי שחלה מחוסן נגד הדבקות שניה", model, tokenizer))
-    # print(grade_single_post("גם מי שלא חוסן [עובר את המחלה בקלות], מניסיון. זה שפעת", model, tokenizer))
-
-    # first = backward_translate("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם")
-    # print(first)
-    # for i in range(5):
-    #     first = random_swap("חבל כל חיסון מגביר את הסיכוי להידבק עוד הפעם", n=2)
-    #     print(first)
-
-
-
-
-'''
-pages talking about covid and vaccines:
-FAKE:
-1. mor sagmon: https://www.facebook.com/mor.sagmon
-2. https://www.facebook.com/groups/VaccineChoiceIL/
-3. https://www.facebook.com/groups/173406684888542/
-
-REAL:
-1. https://www.facebook.com/groups/440665513171433/about
-'''
+    training_heb(clean_filename, model_filename='BERT_model.pkl', tokenizer_filename='AlephBERT_tokenizer.pkl')
