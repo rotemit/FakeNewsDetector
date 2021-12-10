@@ -47,6 +47,7 @@ def replace_recurring_english_words(txt):
     txt = txt.replace('fda', 'פדא')
     txt = txt.replace('dna', 'דנא')
     txt = txt.replace('pims', 'פימס')
+    txt = txt.replace('dna', 'דנא')
     txt = txt.replace('see more', '')
     return txt
 

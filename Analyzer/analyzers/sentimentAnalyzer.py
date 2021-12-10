@@ -1,18 +1,22 @@
+import pandas as pd
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from deep_translator import GoogleTranslator
 sid = SentimentIntensityAnalyzer()
 
 
-def analyze_sentiments(posts):
+def analyze_sentiments(posts, df=None):
     potentialFakePostsNum = 0
     amount = 0
-    for post in posts:
+    for i, post in enumerate(posts):
         if post is not None:
             intensity = check_fake_potential(post)
             potentialFakePostsNum +=  intensity
             amount += 1
+            if df is not None:
+                df.iat[i, 1] = 1-intensity
             print("post: " + post + "\ngrade: " + str(intensity) + "\n")
-
+        elif df is not None:
+            df.iat[i, 1] = "N/A"
     # calculate rate
     potentialFakeRate = potentialFakePostsNum / amount
     potentialFakeRate = 1 - potentialFakeRate #colser to 0 = more FAKE

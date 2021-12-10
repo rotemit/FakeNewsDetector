@@ -1,11 +1,10 @@
 from Analyzer.analyzers import sentimentAnalyzer, trustValueAnalyzer, machineLeaningAnalyzer
 from modules.Scan_result import ScanResult
 from modules.Post import Post
-
-
+import pandas as pd
 ############ analysis manager ############
 
-def analyze_facebook(obj):
+def analyze_facebook(obj, file=None):
     if obj is None or isinstance(obj, str):
         return None
 
@@ -14,14 +13,20 @@ def analyze_facebook(obj):
 
     posts = obj.posts
     name = obj.name
+    df = None
     utv_result = trustValueAnalyzer.analyze_facebook(obj)
+    if file is not None:
+        df = pd.DataFrame(columns=['Trust Value', 'Sentiment Analysis', 'Machine Learning'], index=range(len(posts)))
+        for i in range(len(posts)):
+            df.iloc[i, 0] = utv_result
 
     if len(posts) == 0:
        return ScanResult(name, -1, -1, utv_result)
 
-    sentimentAnalyzer_result = sentimentAnalyzer.analyze_sentiments(posts)
-    machine_learning_result = machineLeaningAnalyzer.grading_posts(posts)
-
+    sentimentAnalyzer_result = sentimentAnalyzer.analyze_sentiments(posts, df)
+    machine_learning_result = machineLeaningAnalyzer.grading_posts(posts, df)
+    if file is not None:
+        df.to_csv(file, index=False)
     return ScanResult(name, sentimentAnalyzer_result, machine_learning_result, utv_result)
 
 
