@@ -7,7 +7,7 @@ const ofri_in = 'https://www.linkedin.com/in/ofri-shani-b63523123/'
 const contact_maayan = 'Maayan Shoel - BSc in Computer Science and Linguistics'
 const maayan_in= 'https://www.linkedin.com/in/maayan-shoel/'
 const contact_rotem = 'Rotem Mitrany - BSc in Computer Science and Linguistics'
-const rotem_in = 'https://www.linkedin.com/in/rotem-mitrany-computer-science/'
+const rotem_in = 'https://www.linkedin.com/in/rotem-mitrany/'
 
 export const Contact = () => {
   return (

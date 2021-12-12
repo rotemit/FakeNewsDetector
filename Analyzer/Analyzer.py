@@ -16,7 +16,7 @@ def analyze_facebook(obj, file=None):
     df = None
     utv_result = trustValueAnalyzer.analyze_facebook(obj)
     if file is not None:
-        df = pd.DataFrame(columns=['Trust Value', 'Sentiment Analysis', 'Machine Learning'], index=range(len(posts)))
+        df = pd.DataFrame(columns=['Trust Value', 'Sentiment Analysis', 'Machine Learning', 'Post'], index=range(len(posts)))
         for i in range(len(posts)):
             df.iloc[i, 0] = utv_result
 

@@ -14,6 +14,7 @@ def analyze_sentiments(posts, df=None):
             amount += 1
             if df is not None:
                 df.iat[i, 1] = 1-intensity
+                df.iat[i, 3] = post
             print("post: " + post + "\ngrade: " + str(intensity) + "\n")
         elif df is not None:
             df.iat[i, 1] = "N/A"

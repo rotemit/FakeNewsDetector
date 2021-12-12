@@ -35,6 +35,8 @@ def scrap_post(text, numOfPosts):
     if isinstance(account, str):
         return {'error': account }
 
+    #if you want the results to be saved in a csv file,
+    # add the filename as a second argument in the next line, in the format: 'example.csv'
     analyzed = analyze_facebook(account)
     return (vars(analyzed))
 
